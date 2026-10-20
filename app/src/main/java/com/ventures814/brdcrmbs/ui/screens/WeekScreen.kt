@@ -55,7 +55,9 @@ fun WeekScreen(
     onDaySelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
     onPreviousWeek: () -> Unit = {},
-    onNextWeek: () -> Unit = {}
+    onNextWeek: () -> Unit = {},
+    onAddFast: () -> Unit = {},
+    onEditFast: (String) -> Unit = {}
 ) {
     Column(
         modifier = modifier.verticalScroll(rememberScrollState()).padding(16.dp),
@@ -87,8 +89,8 @@ fun WeekScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        PlanningSectionCard(stringResource(R.string.week_fasting), R.drawable.ic_fast) {
-            PlanningRows(state.fasting)
+        PlanningSectionCard(stringResource(R.string.week_fasting), R.drawable.ic_fast, onAddFast) {
+            PlanningRows(state.fasting, onEditFast)
         }
         PlanningSectionCard(stringResource(R.string.week_meals, state.meals.size), R.drawable.ic_meal) {
             PlanningRows(state.meals)
@@ -155,7 +157,7 @@ private fun WeekDaySelector(state: WeekUiState, onDaySelected: (Int) -> Unit) {
 }
 
 @Composable
-private fun PlanningRows(rows: List<WeekRow>) {
+private fun PlanningRows(rows: List<WeekRow>, onClick: (String) -> Unit = {}) {
     if (rows.isEmpty()) {
         Text(
             stringResource(R.string.week_empty), modifier = Modifier.padding(16.dp),
@@ -163,12 +165,12 @@ private fun PlanningRows(rows: List<WeekRow>) {
         )
     } else rows.forEachIndexed { index, row ->
         if (index > 0) PlanningDivider()
-        PlanningRow(row.title, row.subtitle, row.time)
+        PlanningRow(row.title, row.subtitle, row.time) { row.planId?.let(onClick) }
     }
 }
 
 @Composable
-private fun PlanningSectionCard(title: String, @DrawableRes icon: Int, content: @Composable () -> Unit) {
+private fun PlanningSectionCard(title: String, @DrawableRes icon: Int, onAdd: () -> Unit = {}, content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -180,16 +182,15 @@ private fun PlanningSectionCard(title: String, @DrawableRes icon: Int, content: 
         ) {
             Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
             Text(title, modifier = Modifier.weight(1f).semantics { heading() }, style = MaterialTheme.typography.titleMedium)
-            TextButton(onClick = {}) { Text(stringResource(R.string.week_add)) }
+            TextButton(onClick = onAdd) { Text(stringResource(R.string.week_add)) }
         }
         content()
     }
 }
 
 @Composable
-private fun PlanningRow(title: String, subtitle: String, time: String? = null) {
-    // Edit affordance only: no navigation or data changes are implemented yet.
-    Surface(onClick = {}, color = MaterialTheme.colorScheme.surfaceVariant) {
+private fun PlanningRow(title: String, subtitle: String, time: String? = null, onClick: () -> Unit = {}) {
+    Surface(onClick = onClick, color = MaterialTheme.colorScheme.surfaceVariant) {
         Row(
             modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,

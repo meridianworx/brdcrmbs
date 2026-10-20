@@ -13,15 +13,26 @@ enum class MealOutcome { PLANNED, DONE, CHANGED, MISSED }
 enum class ActivityOutcome { PLANNED, DONE, MISSED }
 enum class ActivityType { WORKOUT, ACTIVITY }
 
+sealed interface FastingPlan { val id: String }
+
+data class NoFastPlan(
+    override val id: String = UUID.randomUUID().toString(),
+    val date: LocalDate,
+    val zone: ZoneId,
+    val notes: String? = null
+) : FastingPlan {
+    init { require(id.isNotBlank()) }
+}
+
 data class FastingEvent(
-    val id: String = UUID.randomUUID().toString(),
+    override val id: String = UUID.randomUUID().toString(),
     val start: Instant,
     val end: Instant,
     val zone: ZoneId,
     val preset: String? = null,
     val notes: String? = null,
     val outcome: FastingOutcome = FastingOutcome.PLANNED
-) {
+) : FastingPlan {
     init {
         require(id.isNotBlank())
         require(end > start) { "A fast must end after it starts" }
@@ -92,14 +103,16 @@ data class DateRange(val start: LocalDate, val endExclusive: LocalDate) {
 data class PlanningData(
     val fasting: List<FastingEvent> = emptyList(),
     val meals: List<MealPlan> = emptyList(),
-    val activities: List<ActivityPlan> = emptyList()
+    val activities: List<ActivityPlan> = emptyList(),
+    val noFast: List<NoFastPlan> = emptyList()
 ) {
     fun forDay(date: LocalDate, zone: ZoneId): PlanningData {
         val range = DateRange.day(date)
         return PlanningData(
             fasting.filter { it.start < range.endInstant(zone) && it.end > range.startInstant(zone) },
             meals.filter { it.date == date },
-            activities.filter { it.date == date }
+            activities.filter { it.date == date },
+            noFast.filter { it.date == date }
         )
     }
 }

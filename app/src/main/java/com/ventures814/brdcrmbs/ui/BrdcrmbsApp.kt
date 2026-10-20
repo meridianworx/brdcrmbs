@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -35,10 +36,11 @@ private enum class Destination(@param:StringRes val label: Int, @param:DrawableR
 @Composable
 fun BrdcrmbsApp() {
     var selected by rememberSaveable { mutableStateOf(Destination.Today) }
+    var editorVisible by remember { mutableStateOf(false) }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar {
+            if (!editorVisible) NavigationBar {
                 Destination.entries.forEach { destination ->
                     NavigationBarItem(
                         selected = selected == destination,
@@ -53,7 +55,7 @@ fun BrdcrmbsApp() {
         val screenModifier = Modifier.fillMaxSize().padding(innerPadding)
         when (selected) {
             Destination.Today -> TodayScreen(screenModifier)
-            Destination.Week -> WeekRoute(screenModifier)
+            Destination.Week -> WeekRoute(screenModifier, onEditorVisible = { editorVisible = it })
             Destination.Progress -> ProgressScreen(screenModifier)
             Destination.Settings -> SettingsScreen(screenModifier)
         }

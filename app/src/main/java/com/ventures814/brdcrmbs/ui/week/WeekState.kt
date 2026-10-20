@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 data class WeekDay(val label: String, val number: String, val description: String)
-data class WeekRow(val title: String, val subtitle: String, val time: String? = null)
+data class WeekRow(val title: String, val subtitle: String, val time: String? = null, val planId: String? = null)
 data class WeekUiState(
     val weekLabel: String,
     val days: List<WeekDay>,
@@ -52,8 +52,8 @@ fun presentWeek(
             val endLabel = if (acrossDates) "${end.format(monthDay)}, ${end.format(time)}" else end.format(time)
             val minutes = Duration.between(event.start, event.end).toMinutes()
             val duration = if (minutes % 60 == 0L) "${minutes / 60} hour fast" else "${minutes / 60}h ${minutes % 60}m fast"
-            WeekRow("$startLabel → $endLabel", listOfNotNull(event.preset, duration).joinToString(" · "))
-        },
+            WeekRow("$startLabel → $endLabel", listOfNotNull(event.preset, duration).joinToString(" · "), planId = event.id)
+        } + dayPlans.noFast.map { WeekRow("No fast", "Planned", planId = it.id) },
         dayPlans.meals.map { WeekRow(it.text, it.label.orEmpty(), it.time?.format(time)) },
         dayPlans.activities.map {
             WeekRow(it.name, if (it.type == ActivityType.WORKOUT) "Workout" else "Activity", it.time?.format(time))

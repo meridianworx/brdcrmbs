@@ -12,18 +12,52 @@ class RoomPlanningRepository(private val database: PlanningDatabase) : PlanningR
     private val dao = database.planningDao()
 
     override fun observe(range: DateRange, zone: ZoneId): Flow<PlanningData> =
-        database.invalidationTracker.createFlow("fasting_events", "meal_plans", "activity_plans")
+        database.invalidationTracker.createFlow("fasting_events", "meal_plans", "activity_plans", "no_fast_plans")
             .map { load(range, zone) }.distinctUntilChanged()
 
     override suspend fun load(range: DateRange, zone: ZoneId): PlanningData = database.withTransaction {
         PlanningData(
             dao.fasting(range.startInstant(zone).toEpochMilli(), range.endInstant(zone).toEpochMilli()).map { it.model() },
             dao.meals(range.start.toEpochDay(), range.endExclusive.toEpochDay()).map { it.model() },
-            dao.activities(range.start.toEpochDay(), range.endExclusive.toEpochDay()).map { it.model() }
+            dao.activities(range.start.toEpochDay(), range.endExclusive.toEpochDay()).map { it.model() },
+            dao.noFast(range.start.toEpochDay(), range.endExclusive.toEpochDay()).map { it.model() }
         )
     }
 
-    override suspend fun addFasting(event: FastingEvent) = dao.insert(event.entity())
+    override suspend fun addFasting(event: FastingEvent) = addFastingPlan(event)
+
+    override suspend fun getFastingPlan(id: String): FastingPlan? = database.withTransaction {
+        dao.fastingById(id)?.model() ?: dao.noFastById(id)?.model()
+    }
+
+    override suspend fun addFastingPlan(plan: FastingPlan) = database.withTransaction {
+        when (plan) {
+            is FastingEvent -> { check(dao.noFastById(plan.id) == null); dao.insert(plan.entity()) }
+            is NoFastPlan -> { check(dao.fastingById(plan.id) == null); dao.insert(plan.entity()) }
+        }
+    }
+
+    override suspend fun updateFastingPlan(plan: FastingPlan) = database.withTransaction {
+        val existing = checkNotNull(getFastingPlan(plan.id)) { "Plan no longer exists" }
+        check(existing !is FastingEvent || existing.outcome == FastingOutcome.PLANNED) { "Recorded outcomes cannot be edited" }
+        check(plan !is FastingEvent || plan.outcome == FastingOutcome.PLANNED)
+        when {
+            existing is FastingEvent && plan is FastingEvent -> check(dao.updateFasting(plan.id, plan.start.toEpochMilli(), plan.end.toEpochMilli(), plan.zone.id, plan.preset, plan.notes) == 1)
+            existing is NoFastPlan && plan is NoFastPlan -> check(dao.update(plan.entity()) == 1)
+            else -> {
+                deleteFastingPlan(existing.id)
+                addFastingPlan(plan) // Atomic kind conversion, retaining identity and rolling back on failure.
+            }
+        }
+    }
+
+    override suspend fun deleteFastingPlan(id: String) = database.withTransaction {
+        val existing = checkNotNull(getFastingPlan(id)) { "Plan no longer exists" }
+        when (existing) {
+            is FastingEvent -> check(dao.deletePlannedFasting(id) == 1) { "Recorded outcomes cannot be deleted" }
+            is NoFastPlan -> check(dao.deleteNoFast(id) == 1)
+        }
+    }
     override suspend fun addMeal(meal: MealPlan) = dao.insert(meal.entity())
     override suspend fun addActivity(activity: ActivityPlan) = dao.insert(activity.entity())
 

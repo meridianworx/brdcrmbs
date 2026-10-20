@@ -9,7 +9,7 @@
 - **Package name:** com.ventures814.brdcrmbs (namespace and application ID)
 - **Platform:** Android
 - **Repository:** https://github.com/meridianworx/brdcrmbs.git (origin; primary branch main)
-- **Development stage:** Week UI physically accepted and locked; Week data/persistence foundation implemented. Add/Edit and complete Week workflows remain unimplemented.
+- **Development stage:** Week UI baseline remains approved/locked. Week fasting Add/Edit/Delete implemented; physical-device acceptance of this workflow is pending. Complete Week workflows remain unfinished.
 
 # Purpose
 
@@ -84,7 +84,7 @@ Bottom navigation contains exactly four primary destinations:
 - Core functionality should work offline.
 - User-created plans and history must survive app restarts/process death.
 - Persistent structured storage is required.
-- Room over local SQLite is the durable planning source of truth. Initial database version: 1; schema JSON exported to app/schemas and tracked in Git. No destructive migration fallback; future schema changes require explicit, tested migrations.
+- Room over local SQLite is the durable planning source of truth. Initial database version: 1; current database version: 2 with explicit 1→2 migration for dated No fast plans. Both schema JSON versions are exported to app/schemas and tracked in Git. No destructive migration fallback; future schema changes require explicit, tested migrations.
 
 ## Data Models
 
@@ -209,11 +209,11 @@ Product/planning work completed:
 Android foundation implemented:
 - Four-destination app shell; TodayScreen, ProgressScreen, and SettingsScreen remain placeholders. The approved My Week layout now loads repository-backed planning data.
 - Approved dark charcoal / near-black theme, bright green accent, high-contrast typography, rounded cards, and simple line icons.
-- Week persistence and read-side integration implemented; no Add/Edit, adherence UI, Progress calendar, or Settings behavior implemented.
+- Week persistence/read-side integration and fasting Add/Edit/Delete implemented. Meal/activity editors, adherence UI, Progress calendar, and Settings behavior remain unimplemented.
 
 ## In Progress
 
-- Future controlled Add/Edit workflows remain to be scoped; Week persistence/read-side foundation is implemented and validated. The Week feature itself is not complete.
+- Fasting Add/Edit/Delete physical-device acceptance pending. The workflow and the complete Week feature are not marked approved/locked or finished.
 
 ## Planned
 
@@ -436,7 +436,7 @@ Future health measurements must not automatically control the user's plan.
 
 # Current Development Focus
 
-Week data/persistence foundation established behind the locked UI. Next controlled focus: an explicitly scoped Add/Edit planning workflow, without changing the approved layout. Add/Edit, Copy Day, Repeat Last Week, rescheduling, Today adherence, Progress, reminders, and Backup & Restore remain unimplemented. The complete Week feature is not finished.
+Product Owner physical-device acceptance of Week fasting Add/Edit/Delete. Preserve the locked Week layout. Meal/activity editors, Copy Day, Copy to Selected Days, Repeat Last Week, rescheduling, Today adherence, Progress, reminders, and Backup & Restore remain unimplemented. The complete Week feature is not finished.
 
 # Recent Milestones
 
@@ -502,3 +502,27 @@ Week data/persistence foundation established behind the locked UI. Next controll
 - Intentionally unimplemented: Add/Edit forms, Copy Day, Repeat Last Week, saved-item UI/storage, actual-meal UI, rescheduling behavior, reminders, Today/Progress/Settings logic, Backup & Restore, accounts/cloud/analytics. The complete Week feature is not marked finished.
 - Validation: debug build, Android test APK compilation, and all 5 JVM tests passed; all 14 connected Pixel 6 Pro emulator tests passed (0 skipped/failed). An invalid UI-test import was corrected during validation without removing assertions. The new data wiring has not been tested on a physical device; the previously accepted Week visual baseline remains locked.
 - Final verification after the Compose API parameter-order correction: :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest succeeded. Lint: 0 errors, 12 warnings (11 baseline notices plus a newer-KSP-version notice). Existing native-library stripping notice remains non-blocking. No unresolved build/test failures.
+
+## Week Fasting Add / Edit / Delete — 2026-10-19
+
+- Implemented a focused Add Fast / Edit Fast screen using the existing charcoal/green Material 3 foundation. Week Fasting Add opens a new draft; its rows open the specific persisted ID, including when the same event overlaps multiple selected dates. Meals and Workout / Activity retain their layout and inert actions.
+- Editor includes preset chips, explicit start/end date and time controls, zone/UTC offsets, calculated elapsed duration, Save, Back, and confirmed Delete for existing Planned records. The existing bottom navigation is hidden during the focused editor and restored on return. Back discards the draft without writing; SavedStateHandle retains the serializable draft through recreation. Busy operations prevent duplicate submission; persistence failures keep entries available.
+- New drafts initialize at 7:00 PM on the Week-selected calendar date, with the 16:8 preset and an end 16 elapsed hours later (normally 11:00 AM next day). Nothing is persisted until Save.
+- Duration presets: 12:12=12h, 14:10=14h, 16:8=16h, 18:6=18h, 20:4=20h, 24h, 36h, 48h, 72h. Selecting one recomputes the end from the start using elapsed time; changing its start recomputes the end. Manually changing its end switches to Custom. Custom retains explicit endpoints with no application-level duration cap. OMAD is a label only and retains the explicit schedule; no duration or health rule is invented.
+- No fast is a separate NoFastPlan / no_fast_plans record with ID, local planned date, original zone, and optional preserved notes. It is distinguishable from an empty fasting section and never becomes a zero-duration FastingEvent. Its editor shows Planned day instead of start/end/duration. No outcome is fabricated for a non-fasting choice. Saving an edit that changes kind converts only the selected plan atomically while retaining its ID; it does not silently delete other plans or resolve conflicts with separate overlapping fasts.
+- Database version 2 adds only the no_fast_plans table and its date index. MIGRATION_1_2 creates that table/index without rewriting version-1 events, meals/actuals, activities, or outcomes. Both version schemas are retained; production registers the explicit migration and has no destructive fallback.
+- Repository additions: typed FastingPlan lookup, add, update, and delete. Existing event insertion API remains compatible. Updates preserve identity and do not alter stored outcomes. Only PLANNED fasting events may be edited, converted, or deleted; Done/Missed event plans are read-only in the editor and guarded again in persistence. No fast choices remain editable/deletable. All mutations use the existing repository/Room boundary and transactions; Week reacts through its existing Flow.
+- Date/time representation retained: positive-duration fasting instants at millisecond precision plus original zone. Cross-midnight, month/year boundaries, and multi-day events stay one database row. Existing offsets and sub-minute precision survive unchanged edits. New ambiguous repeated-hour local input uses the earlier valid offset; existing repeated-hour offsets are retained. Nonexistent DST-gap times are rejected with inline validation rather than silently shifted. Preset hours are real elapsed hours across DST, with resulting local endpoints shown for inspection.
+- Validation is non-destructive: zero/negative duration or nonexistent local time cannot be saved. No new runtime dependency, network, prescription logic, or unrelated feature workflow was added. Migration verification recreates the exported version-1 schema with Android SQLite and opens it through the production Room migration/validator; no new dependency is retained.
+- Tests added: preset/default/duration/OMAD/Custom/No fast behavior, invalid schedules, DST gaps and repeated offsets, draft serialization, retained fields/precision, durable fasting reload, identity-preserving edit, selected-record deletion, long-fast single-record storage, No fast conversions, recorded-outcome protection, reactive Week updates, version-1-to-2 migration preserving prior history, and Compose Add→Save→Week→Edit→confirmed Delete plus unsaved Back/No fast coverage.
+- Physical-device acceptance of fasting CRUD is pending. Automated validation does not approve/lock this workflow, and the complete Week feature is not marked finished.
+
+### Resumed validation — 2026-10-20
+
+- Resumed the existing uncommitted fasting implementation without resetting/replacing its UI, models, migration, or repository. No fasting milestone commit existed at resume time.
+- The interrupted validation had passed the app build, JVM tests, lint, and 20 of 21 emulator tests. Its migration test failed inside MigrationTestHelper schema deserialization before running the migration: test JSON 1.8.1 and the app-constrained serialization core 1.7.3 had incompatible generated serializer behavior.
+- Removed the newly introduced helper-only Room testing dependency rather than upgrading unrelated runtime dependencies. Migration coverage still uses both committed schema versions: version 1 is recreated from exported SQL, the actual registered 1→2 migration runs on Room open, Room validates all version-2 tables/indices/foreign keys, and the test checks exported identity hash, exact user-table set, integrity/foreign-key checks, preserved history, and No fast insertion. Original history assertions were retained and full planned/actual meal equality added.
+- Retained the added picker-cancel regression test and asynchronous editor-load waits from the interrupted working tree. No approved Week layout or unrelated feature was redesigned, and no previous implementation was discarded or duplicated.
+- The first resumed connected-test run also selected a newly connected physical Pixel 6 Pro. Its keyguard was confirmed showing; all seven Compose UI tests failed to expose/launch interactive content, while its fifteen non-UI tests (including the actual migration test) passed. No phone lock settings were changed. Final automated UI validation targets emulator-5554 explicitly; Product Owner physical-device acceptance remains pending.
+- Final validation passed: :app:assembleDebug, :app:testDebugUnitTest (13 tests, 0 failures/errors), :app:lintDebug (0 errors, 11 existing warnings), and :app:assembleDebugAndroidTest. With ANDROID_SERIAL=emulator-5554, :app:connectedDebugAndroidTest completed successfully: 22 tests, 0 skipped/failed, including migration, persistence, fasting workflow/UI, and existing Week/app-shell regressions. No assertions were disabled.
+- Remaining notices: existing redundant activity label, seven unused starter colors, three dependency update notices, and the non-blocking native-library stripping notice. No unresolved automated build/test failures remain on the emulator. Physical-device Product Owner acceptance is still pending; this workflow is not approved/locked and the remaining Week workflows are not implemented.

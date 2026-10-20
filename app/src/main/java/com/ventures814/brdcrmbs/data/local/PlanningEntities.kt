@@ -10,6 +10,17 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 
+@Entity(tableName = "no_fast_plans", indices = [Index("dateEpochDay")])
+data class NoFastEntity(
+    @PrimaryKey val id: String,
+    val dateEpochDay: Long,
+    val zoneId: String,
+    val notes: String?
+)
+
+internal fun NoFastPlan.entity() = NoFastEntity(id, date.toEpochDay(), zone.id, notes)
+internal fun NoFastEntity.model() = NoFastPlan(id, LocalDate.ofEpochDay(dateEpochDay), ZoneId.of(zoneId), notes)
+
 @Entity(tableName = "fasting_events", indices = [Index("startMillis"), Index("endMillis")])
 data class FastingEntity(
     @PrimaryKey val id: String,

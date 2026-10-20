@@ -1,0 +1,23 @@
+<resources>
+    <string name="fast_add_title">Add Fast</string>
+    <string name="fast_edit_title">Edit Fast</string>
+    <string name="fast_back">Back to Week</string>
+    <string name="fast_preset">Preset</string>
+    <string name="fast_schedule">Schedule</string>
+    <string name="fast_start_date">Start date</string>
+    <string name="fast_start_time">Start time</string>
+    <string name="fast_end_date">End date</string>
+    <string name="fast_end_time">End time</string>
+    <string name="fast_day">Planned day</string>
+    <string name="fast_duration">Duration: %1$d h %2$d min</string>
+    <string name="fast_zone">Time zone: %1$s</string>
+    <string name="fast_offsets">Start UTC offset: %1$s · End UTC offset: %2$s</string>
+    <string name="fast_save">Save</string>
+    <string name="fast_saving">Saving…</string>
+    <string name="fast_delete">Delete</string>
+    <string name="fast_delete_title">Delete fasting plan?</string>
+    <string name="fast_delete_message">Only this selected fasting plan will be deleted.</string>
+    <string name="fast_cancel">Cancel</string>
+    <string name="fast_ok">OK</string>
+    <string name="fast_recorded_read_only">This fast has a recorded outcome. Its historical plan is read-only.</string>
+</resources>
