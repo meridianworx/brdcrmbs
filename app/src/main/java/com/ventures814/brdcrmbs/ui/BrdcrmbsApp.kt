@@ -22,7 +22,7 @@ import com.ventures814.brdcrmbs.R
 import com.ventures814.brdcrmbs.ui.screens.ProgressScreen
 import com.ventures814.brdcrmbs.ui.screens.SettingsScreen
 import com.ventures814.brdcrmbs.ui.screens.TodayScreen
-import com.ventures814.brdcrmbs.ui.screens.WeekScreen
+import com.ventures814.brdcrmbs.ui.week.WeekRoute
 import com.ventures814.brdcrmbs.ui.theme.BrdcrmbsTheme
 
 private enum class Destination(@param:StringRes val label: Int, @param:DrawableRes val icon: Int) {
@@ -53,7 +53,7 @@ fun BrdcrmbsApp() {
         val screenModifier = Modifier.fillMaxSize().padding(innerPadding)
         when (selected) {
             Destination.Today -> TodayScreen(screenModifier)
-            Destination.Week -> WeekScreen(screenModifier)
+            Destination.Week -> WeekRoute(screenModifier)
             Destination.Progress -> ProgressScreen(screenModifier)
             Destination.Settings -> SettingsScreen(screenModifier)
         }

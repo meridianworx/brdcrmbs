@@ -26,17 +26,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -46,11 +41,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ventures814.brdcrmbs.R
 import com.ventures814.brdcrmbs.ui.theme.BrdcrmbsTheme
+import com.ventures814.brdcrmbs.ui.week.WeekUiState
+import com.ventures814.brdcrmbs.ui.week.WeekRow
+import com.ventures814.brdcrmbs.ui.week.presentWeek
+import com.ventures814.brdcrmbs.domain.DateRange
+import com.ventures814.brdcrmbs.domain.PlanningData
+import java.time.LocalDate
+import java.time.ZoneId
 
-/** Presentation-only sample. Dates and rows are not connected to a planning model. */
 @Composable
-fun WeekScreen(modifier: Modifier = Modifier) {
-    var selectedDay by rememberSaveable { mutableIntStateOf(0) }
+fun WeekScreen(
+    state: WeekUiState,
+    onDaySelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    onPreviousWeek: () -> Unit = {},
+    onNextWeek: () -> Unit = {}
+) {
     Column(
         modifier = modifier.verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -72,41 +78,41 @@ fun WeekScreen(modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        SampleWeekSelector()
-        WeekDaySelector(selectedDay = selectedDay, onDaySelected = { selectedDay = it })
+        WeekSelector(state.weekLabel, onPreviousWeek, onNextWeek)
+        WeekDaySelector(state, onDaySelected)
+        if (state.loading || state.failed) {
+            Text(
+                stringResource(if (state.failed) R.string.week_load_failed else R.string.week_loading),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
         PlanningSectionCard(stringResource(R.string.week_fasting), R.drawable.ic_fast) {
-            PlanningRow(stringResource(R.string.sample_fast_time), stringResource(R.string.sample_fast_detail))
+            PlanningRows(state.fasting)
         }
-        PlanningSectionCard(stringResource(R.string.week_meals), R.drawable.ic_meal) {
-            PlanningRow(stringResource(R.string.sample_eggs), stringResource(R.string.sample_first_meal), stringResource(R.string.sample_meal_time_1))
-            PlanningDivider()
-            PlanningRow(stringResource(R.string.sample_chicken), stringResource(R.string.sample_lunch), stringResource(R.string.sample_meal_time_2))
-            PlanningDivider()
-            PlanningRow(stringResource(R.string.sample_salmon), stringResource(R.string.sample_dinner), stringResource(R.string.sample_meal_time_3))
+        PlanningSectionCard(stringResource(R.string.week_meals, state.meals.size), R.drawable.ic_meal) {
+            PlanningRows(state.meals)
         }
-        PlanningSectionCard(stringResource(R.string.week_activity), R.drawable.ic_activity) {
-            PlanningRow(stringResource(R.string.sample_workout), stringResource(R.string.sample_workout_type), stringResource(R.string.sample_workout_time))
-            PlanningDivider()
-            PlanningRow(stringResource(R.string.sample_walk), stringResource(R.string.sample_activity_type), stringResource(R.string.sample_walk_time))
+        PlanningSectionCard(stringResource(R.string.week_activity, state.activities.size), R.drawable.ic_activity) {
+            PlanningRows(state.activities)
         }
     }
 }
 
 @Composable
-private fun SampleWeekSelector() {
+private fun WeekSelector(label: String, onPrevious: () -> Unit, onNext: () -> Unit) {
     Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(16.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            // Intentionally inert for the static UI milestone.
-            IconButton(onClick = {}) {
+            IconButton(onClick = onPrevious) {
                 Icon(painterResource(R.drawable.ic_chevron), stringResource(R.string.previous_week), Modifier.rotate(180f))
             }
             Text(
-                stringResource(R.string.sample_week_range),
+                label,
                 modifier = Modifier.weight(1f),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 style = MaterialTheme.typography.titleSmall
             )
-            IconButton(onClick = {}) {
+            IconButton(onClick = onNext) {
                 Icon(painterResource(R.drawable.ic_chevron), stringResource(R.string.next_week))
             }
         }
@@ -114,8 +120,7 @@ private fun SampleWeekSelector() {
 }
 
 @Composable
-private fun WeekDaySelector(selectedDay: Int, onDaySelected: (Int) -> Unit) {
-    val days = stringArrayResource(R.array.sample_week_days)
+private fun WeekDaySelector(state: WeekUiState, onDaySelected: (Int) -> Unit) {
     val fontScale = LocalDensity.current.fontScale
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         // Fit seven days when possible; allow horizontal scrolling on narrow/large-text layouts.
@@ -124,10 +129,8 @@ private fun WeekDaySelector(selectedDay: Int, onDaySelected: (Int) -> Unit) {
             modifier = Modifier.horizontalScroll(rememberScrollState()).selectableGroup(),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            days.forEachIndexed { index, day ->
-                val selected = index == selectedDay
-                val date = (19 + index).toString()
-                val dayDescription = stringResource(R.string.sample_day_description, day, date)
+            state.days.forEachIndexed { index, day ->
+                val selected = index == state.selectedDay
                 Surface(
                     color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
@@ -137,17 +140,30 @@ private fun WeekDaySelector(selectedDay: Int, onDaySelected: (Int) -> Unit) {
                         modifier = Modifier.width(dayWidth).heightIn(min = 64.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .selectable(selected = selected, role = Role.Tab, onClick = { onDaySelected(index) })
-                            .semantics { contentDescription = dayDescription }
+                            .semantics { contentDescription = day.description }
                             .padding(horizontal = 4.dp, vertical = 10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
                     ) {
-                        Text(day, style = MaterialTheme.typography.labelMedium)
-                        Text(date, style = MaterialTheme.typography.titleMedium)
+                        Text(day.label, style = MaterialTheme.typography.labelMedium)
+                        Text(day.number, style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PlanningRows(rows: List<WeekRow>) {
+    if (rows.isEmpty()) {
+        Text(
+            stringResource(R.string.week_empty), modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    } else rows.forEachIndexed { index, row ->
+        if (index > 0) PlanningDivider()
+        PlanningRow(row.title, row.subtitle, row.time)
     }
 }
 
@@ -197,5 +213,6 @@ private fun PlanningDivider() {
 @Preview(showBackground = true, widthDp = 360, heightDp = 800)
 @Composable
 private fun WeekScreenPreview() {
-    BrdcrmbsTheme { Surface { WeekScreen() } }
+    val state = presentWeek(DateRange.weekContaining(LocalDate.of(2026, 10, 19)), 0, PlanningData(), ZoneId.of("America/Denver"))
+    BrdcrmbsTheme { Surface { WeekScreen(state, {}) } }
 }

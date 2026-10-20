@@ -9,7 +9,7 @@
 - **Package name:** com.ventures814.brdcrmbs (namespace and application ID)
 - **Platform:** Android
 - **Repository:** https://github.com/meridianworx/brdcrmbs.git (origin; primary branch main)
-- **Development stage:** App shell and static Week UI baseline implemented; Week visual acceptance pending; real feature workflows and persistence have not begun.
+- **Development stage:** Week UI physically accepted and locked; Week data/persistence foundation implemented. Add/Edit and complete Week workflows remain unimplemented.
 
 # Purpose
 
@@ -84,7 +84,7 @@ Bottom navigation contains exactly four primary destinations:
 - Core functionality should work offline.
 - User-created plans and history must survive app restarts/process death.
 - Persistent structured storage is required.
-- Exact Android persistence technology will be finalized during implementation.
+- Room over local SQLite is the durable planning source of truth. Initial database version: 1; schema JSON exported to app/schemas and tracked in Git. No destructive migration fallback; future schema changes require explicit, tested migrations.
 
 ## Data Models
 
@@ -207,13 +207,13 @@ Product/planning work completed:
 - 12-screen UI/UX baseline approved
 
 Android foundation implemented:
-- Four-destination app shell; TodayScreen, ProgressScreen, and SettingsScreen remain placeholders. WeekScreen now renders the static My Week UI baseline.
+- Four-destination app shell; TodayScreen, ProgressScreen, and SettingsScreen remain placeholders. The approved My Week layout now loads repository-backed planning data.
 - Approved dark charcoal / near-black theme, bright green accent, high-contrast typography, rounded cards, and simple line icons.
-- No real planning, adherence, calendar, settings, or persistence behavior implemented.
+- Week persistence and read-side integration implemented; no Add/Edit, adherence UI, Progress calendar, or Settings behavior implemented.
 
 ## In Progress
 
-- Week UI baseline visual review/physical-device acceptance pending. The Week feature itself is not complete.
+- Future controlled Add/Edit workflows remain to be scoped; Week persistence/read-side foundation is implemented and validated. The Week feature itself is not complete.
 
 ## Planned
 
@@ -387,6 +387,7 @@ The following have Product Owner approval and must not be changed casually:
 - Meal photography is excluded.
 - Detailed workout programming/logging remains outside brdcrmbs.
 - Approved UI must not be casually redesigned during implementation.
+- Week My Week UI baseline passed physical-device acceptance and is approved/locked by the Product Owner. Data wiring must preserve its layout/theme.
 
 # Approved UI / UX
 
@@ -435,7 +436,7 @@ Future health measurements must not automatically control the user's plan.
 
 # Current Development Focus
 
-Week UI acceptance on a physical Android device before implementing the underlying data/persistence layer. Review the static My Week sample layout; no Week persistence or real planning interactions have been implemented. The Week feature is not complete.
+Week data/persistence foundation established behind the locked UI. Next controlled focus: an explicitly scoped Add/Edit planning workflow, without changing the approved layout. Add/Edit, Copy Day, Repeat Last Week, rescheduling, Today adherence, Progress, reminders, and Backup & Restore remain unimplemented. The complete Week feature is not finished.
 
 # Recent Milestones
 
@@ -482,3 +483,22 @@ Week UI acceptance on a physical Android device before implementing the underlyi
 - No dependencies introduced. Added Week UI tests for day selection/restoration and reaching every sample row; updated shell regression test for the new Week heading.
 - Physical-device visual acceptance remains pending. This completes the static UI implementation milestone only, not the Week feature or its product acceptance.
 - Validation passed: :app:assembleDebug, :app:testDebugUnitTest (1 test), :app:lintDebug (0 errors, 11 existing baseline warnings), and :app:assembleDebugAndroidTest. Connected emulator suite passed all 4 tests (shell navigation/restoration, package identity, Week day selection/restoration, sample-row scrolling). No physical-device acceptance was performed.
+
+## Week Data / Persistence Foundation — 2026-10-19
+
+- Product Owner confirmed physical-device acceptance of the Week UI baseline; that baseline is now locked. Historical pending-acceptance notes above describe the earlier milestone only.
+- Architecture: Compose WeekScreen renders WeekUiState; WeekRoute obtains a lifecycle-aware WeekViewModel; the ViewModel uses PlanningRepository; RoomPlanningRepository is the sole database boundary. BrdcrmbsApplication owns one lazy process-wide repository/database instance. No DI framework or network dependency introduced.
+- Database: Room 2.8.5, database file brdcrmbs-planning.db, version 1, exported schemas. Tables: fasting_events, meal_plans, activity_plans. Primary keys are stable UUID strings by default. Date and overlap columns indexed. Activity rescheduledFromId is an optional indexed self-reference with a non-cascading foreign key.
+- Plain domain models: FastingEvent, MealPlan, ActualMeal, ActivityPlan, typed outcomes, ActivityType, DateRange, and PlanningData. Storage entities/mapping remain in data/local, outside Compose.
+- Dates are LocalDate stored as epoch-day INTEGERs. Optional times are LocalTime stored as nullable nanoseconds-of-day INTEGERs; floating local plans do not shift with device time-zone changes. Fasting endpoints are Instant stored as epoch-millisecond INTEGERs plus original IANA ZoneId text. Sub-millisecond endpoints are rejected instead of silently truncated. One fast remains one row for any duration; only positive duration is required.
+- Query ranges are start-inclusive/end-exclusive. Fasts overlap when start < rangeEnd AND end > rangeStart; a fast ending at midnight does not appear on the following date. Calendar range boundaries use atStartOfDay(viewingZone), not fixed 24-hour arithmetic, so 23/25-hour DST dates are handled correctly. Existing instants are unambiguous; resolving ambiguous/nonexistent local input is reserved for the future Add/Edit workflow. Fasting labels retain the event's original zone and show dates when endpoints cross calendar dates.
+- Repository: suspend insert-only saves (duplicate IDs abort), transactional range snapshots, and a Flow invalidated by relevant table changes. Supports arbitrary date ranges, day/week queries, and later month queries. Meals/activities use planned calendar dates; multi-day/earlier-started fasts are queried by overlap and appear on each overlapping day without duplication in storage.
+- Historical integrity: separate actual meal text/time/label/notes columns; recordChangedMeal updates only actual columns and CHANGED outcome, preserving original planned data. Changed without actual text is rejected. Raw outcome names are stored explicitly. No generic replace/upsert that can silently erase history. Rescheduled activity linkage supports a new record while the original remains MISSED; no rescheduling operation/UI was implemented.
+- State: ViewModel observes Room through the repository, filters the chosen day, and exposes StateFlow collected with collectAsStateWithLifecycle. SavedStateHandle retains Monday week start and selected day across recreation; the initial week uses the current local date. Existing week arrows load adjacent ranges; day selection shows that date's plans. No business/date conversion logic lives in Compose.
+- UI wiring only: approved card structure, typography, colors, day strip, navigation, and edit affordances preserved. Counts/rows are data-driven; empty sections retain Add and show Nothing planned. Loading/failure text avoids presenting read failures as successful empty results. Add/edit rows remain inert.
+- Production database starts empty: no sample seeds or data copied from mockups. Sample plans live only in androidTest; previews use an empty presentation state. Saved Meals/Saved Activities persistence is deferred because it is not necessary for this planning foundation and can be added through a future migration.
+- Build additions: Room runtime/compiler and schema plugin, KSP 2.3.9, lifecycle ViewModel/Compose collection artifacts aligned to existing lifecycle 2.11.0, and JDK library desugaring 2.1.5 for java.time on minSdk 24/25. Existing Android SDK, AGP, Kotlin/Compose, and navigation configuration retained.
+- Tests added: database file close/reopen durability, planned and Changed meal fields, every outcome, activities and missed-original linkage, same-day/cross-midnight/24h/36h/48h/72h/240h fasts, overlap/midnight boundaries, year/month/week boundaries, DST dates, explicit viewing zones, reactive repository/ViewModel updates, duplicate-ID protection, day filtering/restoration, and empty UI sections. Existing shell regression checks retained.
+- Intentionally unimplemented: Add/Edit forms, Copy Day, Repeat Last Week, saved-item UI/storage, actual-meal UI, rescheduling behavior, reminders, Today/Progress/Settings logic, Backup & Restore, accounts/cloud/analytics. The complete Week feature is not marked finished.
+- Validation: debug build, Android test APK compilation, and all 5 JVM tests passed; all 14 connected Pixel 6 Pro emulator tests passed (0 skipped/failed). An invalid UI-test import was corrected during validation without removing assertions. The new data wiring has not been tested on a physical device; the previously accepted Week visual baseline remains locked.
+- Final verification after the Compose API parameter-order correction: :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleDebugAndroidTest succeeded. Lint: 0 errors, 12 warnings (11 baseline notices plus a newer-KSP-version notice). Existing native-library stripping notice remains non-blocking. No unresolved build/test failures.
