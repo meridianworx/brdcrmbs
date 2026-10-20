@@ -9,7 +9,7 @@
 - **Package name:** com.ventures814.brdcrmbs (namespace and application ID)
 - **Platform:** Android
 - **Repository:** https://github.com/meridianworx/brdcrmbs.git (origin; primary branch main)
-- **Development stage:** App shell/navigation and approved visual foundation implemented; real feature workflows have not begun.
+- **Development stage:** App shell and static Week UI baseline implemented; Week visual acceptance pending; real feature workflows and persistence have not begun.
 
 # Purpose
 
@@ -207,13 +207,13 @@ Product/planning work completed:
 - 12-screen UI/UX baseline approved
 
 Android foundation implemented:
-- Four-destination app shell with TodayScreen, WeekScreen, ProgressScreen, and SettingsScreen placeholders.
+- Four-destination app shell; TodayScreen, ProgressScreen, and SettingsScreen remain placeholders. WeekScreen now renders the static My Week UI baseline.
 - Approved dark charcoal / near-black theme, bright green accent, high-contrast typography, rounded cards, and simple line icons.
 - No real planning, adherence, calendar, settings, or persistence behavior implemented.
 
 ## In Progress
 
-- No product implementation task is currently in progress.
+- Week UI baseline visual review/physical-device acceptance pending. The Week feature itself is not complete.
 
 ## Planned
 
@@ -435,7 +435,7 @@ Future health measurements must not automatically control the user's plan.
 
 # Current Development Focus
 
-App shell/navigation and visual foundation milestone complete. Next focus: the first real feature workflow, to be specified in a separate controlled task by the Product Owner. Feature behavior and persistence remain unimplemented. Physical-device review of the shell remains pending.
+Week UI acceptance on a physical Android device before implementing the underlying data/persistence layer. Review the static My Week sample layout; no Week persistence or real planning interactions have been implemented. The Week feature is not complete.
 
 # Recent Milestones
 
@@ -471,3 +471,14 @@ App shell/navigation and visual foundation milestone complete. Next focus: the f
 - Validation: debug build, existing unit test, debug lint, and debug Android test APK build passed. No new dependencies or product infrastructure added.
 - Scope remains shell only: no planning, adherence, calendar, forms, settings actions, reminders, backup/restore, databases, repositories, or meal photos.
 - Debug lint reports 0 errors and the same 11 baseline warnings (redundant label, unused starter colors, dependency update notices); no dependency upgrades or unrelated cleanup performed.
+
+## Week UI Baseline — 2026-10-19
+
+- Replaced only the Week placeholder with My Week: branding/title/subtitle, fixed October 19–25, 2026 range, and Mon 19 through Sun 25 day selector with Monday initially selected.
+- Static sample cards: Fasting (7:00 PM → 11:00 AM; 16:8 · 16 hour fast), Meals (3: Eggs + avocado, Chicken + vegetables, Salmon + salad), and Workout / Activity (2: Bakal Gym — Upper Body, 20-minute walk), with the requested times and labels.
+- Added small Week-only presentation components: SampleWeekSelector, WeekDaySelector, PlanningSectionCard, PlanningRow, and dividers. Existing charcoal/green theme and four-item navigation preserved; other three destinations were not redesigned.
+- Day selection changes only the highlight; all days show the same sample content. Week arrows, Add buttons, and planning-row edit affordances intentionally do nothing. No dialogs, real forms, copy logic, calculations, reminders, or data infrastructure added.
+- Vertical scrolling respects the existing scaffold insets and bottom navigation. Day tiles have practical touch targets and horizontal overflow for narrow/large-text layouts; row text can wrap.
+- No dependencies introduced. Added Week UI tests for day selection/restoration and reaching every sample row; updated shell regression test for the new Week heading.
+- Physical-device visual acceptance remains pending. This completes the static UI implementation milestone only, not the Week feature or its product acceptance.
+- Validation passed: :app:assembleDebug, :app:testDebugUnitTest (1 test), :app:lintDebug (0 errors, 11 existing baseline warnings), and :app:assembleDebugAndroidTest. Connected emulator suite passed all 4 tests (shell navigation/restoration, package identity, Week day selection/restoration, sample-row scrolling). No physical-device acceptance was performed.

@@ -25,11 +25,6 @@ fun TodayScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun WeekScreen(modifier: Modifier = Modifier) {
-    PlaceholderScreen(R.string.nav_week, R.string.week_placeholder, modifier)
-}
-
-@Composable
 fun ProgressScreen(modifier: Modifier = Modifier) {
     PlaceholderScreen(R.string.nav_progress, R.string.progress_placeholder, modifier)
 }

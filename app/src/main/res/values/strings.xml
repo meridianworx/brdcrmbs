@@ -7,7 +7,6 @@
     <string name="product_philosophy">You make the plan. The app helps you follow it.</string>
     <string name="placeholder_title">Coming next</string>
     <string name="today_placeholder">Your daily fasting, meals, and activity will appear here.</string>
-    <string name="week_placeholder">Your weekly planning space will appear here.</string>
     <string name="progress_placeholder">Your adherence history will appear here.</string>
     <string name="settings_placeholder">Your app settings will appear here.</string>
 </resources>

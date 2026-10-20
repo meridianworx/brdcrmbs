@@ -1,0 +1,33 @@
+<resources>
+    <string name="my_week">My Week</string>
+    <string name="week_subtitle">Plan your fasting, meals, and activity.</string>
+    <string name="sample_week_range">October 19–25, 2026</string>
+    <string name="previous_week">Previous week</string>
+    <string name="next_week">Next week</string>
+    <string name="sample_day_description">%1$s %2$s, October 2026</string>
+    <string-array name="sample_week_days">
+        <item>Mon</item><item>Tue</item><item>Wed</item><item>Thu</item>
+        <item>Fri</item><item>Sat</item><item>Sun</item>
+    </string-array>
+    <string name="week_fasting">Fasting</string>
+    <string name="week_meals">Meals (3)</string>
+    <string name="week_activity">Workout / Activity (2)</string>
+    <string name="week_add">+ Add</string>
+    <string name="sample_fast_time">7:00 PM → 11:00 AM</string>
+    <string name="sample_fast_detail">16:8 · 16 hour fast</string>
+    <string name="sample_meal_time_1">11:00 AM</string>
+    <string name="sample_meal_time_2">2:30 PM</string>
+    <string name="sample_meal_time_3">6:00 PM</string>
+    <string name="sample_eggs">Eggs + avocado</string>
+    <string name="sample_chicken">Chicken + vegetables</string>
+    <string name="sample_salmon">Salmon + salad</string>
+    <string name="sample_first_meal">First meal</string>
+    <string name="sample_lunch">Lunch</string>
+    <string name="sample_dinner">Dinner</string>
+    <string name="sample_workout_time">5:00 PM</string>
+    <string name="sample_walk_time">8:00 PM</string>
+    <string name="sample_workout">Bakal Gym — Upper Body</string>
+    <string name="sample_walk">20-minute walk</string>
+    <string name="sample_workout_type">Workout</string>
+    <string name="sample_activity_type">Activity</string>
+</resources>
