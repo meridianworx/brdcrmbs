@@ -18,5 +18,9 @@ interface PlanningRepository {
     suspend fun deletePlannedMeal(id: String)
     suspend fun savedMeals(): List<SavedMeal>
     suspend fun addActivity(activity: ActivityPlan)
+    suspend fun getActivity(id: String): ActivityPlan?
+    suspend fun savePlannedActivity(activity: ActivityPlan, isNew: Boolean, saveForReuse: Boolean = false)
+    suspend fun deletePlannedActivity(id: String)
+    suspend fun savedActivities(): List<SavedActivity>
     suspend fun recordChangedMeal(id: String, actual: ActualMeal)
 }

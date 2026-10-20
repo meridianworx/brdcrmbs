@@ -26,7 +26,8 @@ class PlanningMigrationTest {
                 val entity = entities.getJSONObject(index)
                 val table = entity.getString("tableName")
                 db.execSQL(entity.getString("createSql").replace("\${TABLE_NAME}", table))
-                val indices = entity.getJSONArray("indices")
+                // Room omits this array for entities with no declared indices (for example Saved Meals).
+                val indices = entity.optJSONArray("indices") ?: org.json.JSONArray()
                 for (item in 0 until indices.length()) {
                     db.execSQL(indices.getJSONObject(item).getString("createSql").replace("\${TABLE_NAME}", table))
                 }
@@ -36,7 +37,9 @@ class PlanningMigrationTest {
             db.execSQL("INSERT INTO fasting_events VALUES ('fast', 0, 86400000, 'UTC', '24h', 'Keep', 'MISSED')")
             db.execSQL("INSERT INTO meal_plans VALUES ('meal', 0, NULL, 'Original', 'Lunch', 'Plan notes', 'CHANGED', 'Actual', NULL, 'Actual label', 'Actual notes')")
             db.execSQL("INSERT INTO activity_plans VALUES ('activity', 0, NULL, 'Walk', 'ACTIVITY', 'Keep', 'MISSED', NULL)")
-            if (version == 2) db.execSQL("INSERT INTO no_fast_plans VALUES ('no-fast', 0, 'UTC', 'Keep no fast')")
+            if (version >= 2) db.execSQL("INSERT INTO no_fast_plans VALUES ('no-fast', 0, 'UTC', 'Keep no fast')")
+            if (version >= 3) db.execSQL("INSERT INTO saved_meals VALUES ('saved-meal', 'Reusable meal', 'Lunch', 'Keep saved meal')")
+            db.execSQL("INSERT INTO activity_plans VALUES ('linked', 1, NULL, 'Later walk', 'ACTIVITY', 'Linked notes', 'PLANNED', 'activity')")
             db.version = version
         }
     }
@@ -44,24 +47,26 @@ class PlanningMigrationTest {
     @Test fun migrationPreservesVersionOneHistoryAndAddsEmptyNoFastTable() = verifyMigration(1)
     @Test fun migrationPreservesVersionTwoFastingAndHistoryAndAddsSavedMeals() = verifyMigration(2)
 
+    @Test fun migrationPreservesVersionThreeSavedMealsAndAllPlans() = verifyMigration(3)
+
     private fun verifyMigration(version: Int) = runBlocking {
         val name = "migration-${java.util.UUID.randomUUID()}.db"
         createOldVersion(name, version)
         val database = Room.databaseBuilder(instrumentation.targetContext, PlanningDatabase::class.java, name)
-            .addMigrations(PlanningDatabase.MIGRATION_1_2, PlanningDatabase.MIGRATION_2_3).build()
+            .addMigrations(PlanningDatabase.MIGRATION_1_2, PlanningDatabase.MIGRATION_2_3, PlanningDatabase.MIGRATION_3_4).build()
         try {
             // Opening through Room executes the production migration chain and full schema validator.
             val migrated = database.openHelper.writableDatabase
-            assertEquals(3, migrated.version)
+            assertEquals(4, migrated.version)
             migrated.query("SELECT identity_hash FROM room_master_table WHERE id = 42").use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals(schema(3).getString("identityHash"), cursor.getString(0))
+                assertEquals(schema(4).getString("identityHash"), cursor.getString(0))
             }
             val tables = mutableSetOf<String>()
             migrated.query("SELECT name FROM sqlite_master WHERE type = 'table'").use { cursor ->
                 while (cursor.moveToNext()) tables.add(cursor.getString(0))
             }
-            assertEquals(setOf("fasting_events", "meal_plans", "activity_plans", "no_fast_plans", "saved_meals"),
+            assertEquals(setOf("fasting_events", "meal_plans", "activity_plans", "no_fast_plans", "saved_meals", "saved_activities"),
                 tables - setOf("android_metadata", "room_master_table"))
             migrated.query("PRAGMA integrity_check").use { cursor ->
                 assertTrue(cursor.moveToFirst()); assertEquals("ok", cursor.getString(0))
@@ -83,10 +88,13 @@ class PlanningMigrationTest {
             if (version == 1) assertTrue(data.noFast.isEmpty()) else {
                 assertEquals(NoFastPlan("no-fast", java.time.LocalDate.ofEpochDay(0), java.time.ZoneId.of("UTC"), "Keep no fast"), data.noFast.single())
             }
-            assertTrue(repo.savedMeals().isEmpty())
+            if (version < 3) assertTrue(repo.savedMeals().isEmpty()) else assertEquals(SavedMeal("saved-meal", "Reusable meal", "Lunch", "Keep saved meal"), repo.savedMeals().single())
+            assertTrue(repo.savedActivities().isEmpty())
+            assertEquals("activity", repo.getActivity("linked")!!.rescheduledFromId)
+            assertEquals(ActivityOutcome.MISSED, repo.getActivity("activity")!!.outcome)
             val planned = MealPlan(date = java.time.LocalDate.ofEpochDay(0), text = "Reusable")
             repo.savePlannedMeal(planned, isNew = true, saveForReuse = true)
-            assertEquals("Reusable", repo.savedMeals().single().text)
+            assertEquals("Reusable", repo.savedMeals().single { it.text == "Reusable" }.text)
             repo.addFastingPlan(NoFastPlan(date = java.time.LocalDate.ofEpochDay(0), zone = java.time.ZoneOffset.UTC))
             assertEquals(if (version == 1) 1 else 2, repo.load(DateRange.day(java.time.LocalDate.ofEpochDay(0)), java.time.ZoneOffset.UTC).noFast.size)
         } finally { database.close(); instrumentation.targetContext.deleteDatabase(name) }

@@ -19,6 +19,7 @@ import com.ventures814.brdcrmbs.BrdcrmbsApplication
 import com.ventures814.brdcrmbs.ui.screens.WeekScreen
 import com.ventures814.brdcrmbs.ui.fasting.FastingEditorScreen
 import com.ventures814.brdcrmbs.ui.meals.MealEditorScreen
+import com.ventures814.brdcrmbs.ui.activities.ActivityEditorScreen
 
 @Composable
 fun rememberWeekModel(): WeekViewModel {
@@ -45,10 +46,28 @@ fun WeekRoute(
     val mealError by model.mealError.collectAsStateWithLifecycle()
     val savedMeals by model.savedMeals.collectAsStateWithLifecycle()
     val mealEditing = meal != null || mealLoading || mealError != null
-    val editing = draft != null || loading || mealEditing
+    val activity by model.activityEditor.collectAsStateWithLifecycle()
+    val activityLoading by model.activityLoading.collectAsStateWithLifecycle()
+    val activityBusy by model.activityBusy.collectAsStateWithLifecycle()
+    val activityError by model.activityError.collectAsStateWithLifecycle()
+    val savedActivities by model.savedActivities.collectAsStateWithLifecycle()
+    val activityEditing = activity != null || activityLoading || activityError != null
+    val editing = draft != null || loading || mealEditing || activityEditing
     LaunchedEffect(editing) { onEditorVisible(editing) }
     DisposableEffect(Unit) { onDispose { onEditorVisible(false) } }
-    BackHandler(editing) { if (mealEditing) model.closeMealEditor() else model.closeEditor() }
+    BackHandler(editing) {
+        if (activityEditing) model.closeActivityEditor() else if (mealEditing) model.closeMealEditor() else model.closeEditor()
+    }
+    if (activityEditing) {
+        if (activityLoading || activity == null) {
+            Column(modifier) {
+                TextButton(onClick = model::closeActivityEditor) { Text("Back to Week") }
+                Text(activityError ?: "Loading activity…")
+            }
+        } else ActivityEditorScreen(activity!!, savedActivities, activityBusy, activityError, model::updateActivityDraft,
+            model::saveActivity, model::deleteActivity, model::closeActivityEditor, modifier)
+        return
+    }
     if (mealEditing) {
         if (mealLoading || meal == null) {
             Column(modifier) {
@@ -86,6 +105,8 @@ fun WeekRoute(
         onAddFast = model::addFast,
         onEditFast = model::editFast,
         onAddMeal = model::addMeal,
-        onEditMeal = model::editMeal
+        onEditMeal = model::editMeal,
+        onAddActivity = model::addActivity,
+        onEditActivity = model::editActivity
     )
 }

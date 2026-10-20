@@ -1,0 +1,32 @@
+<resources>
+    <string name="activity_back">Back to Week</string>
+    <string name="activity_add_title">Add Activity</string>
+    <string name="activity_edit_title">Edit Activity</string>
+    <string name="activity_source">Plan from</string>
+    <string name="activity_bakal">Bakal Gym</string>
+    <string name="activity_saved_source">Saved Activity</string>
+    <string name="activity_custom_source">New Custom Activity</string>
+    <string name="activity_bakal_help">Enter a workout reference, such as Bakal Gym — Upper Body. Detailed logging stays in Bakal Gym.</string>
+    <string name="activity_name">Name (required)</string>
+    <string name="activity_type">Type</string>
+    <string name="activity_workout">Workout</string>
+    <string name="activity_activity">Activity</string>
+    <string name="activity_notes">Notes (optional)</string>
+    <string name="activity_date_value">Date: %1$s</string>
+    <string name="activity_time_value">Time: %1$s</string>
+    <string name="activity_no_time">Time (optional): Not set</string>
+    <string name="activity_clear_time">Remove time</string>
+    <string name="activity_time_title">Activity time</string>
+    <string name="activity_save_reuse">Save for reuse</string>
+    <string name="activity_saved_title">Saved Activities</string>
+    <string name="activity_saved_empty">No Saved Activities yet. Save an activity for reuse when planning.</string>
+    <string name="activity_save">Save</string>
+    <string name="activity_saving">Saving…</string>
+    <string name="activity_delete">Delete</string>
+    <string name="activity_delete_title">Delete planned activity?</string>
+    <string name="activity_delete_message">Only this planned activity will be deleted. Saved Activities remain available.</string>
+    <string name="activity_cancel">Cancel</string>
+    <string name="activity_ok">OK</string>
+    <string name="activity_required">Name is required.</string>
+    <string name="activity_read_only">This activity has recorded history and cannot be edited or deleted here.</string>
+</resources>

@@ -81,6 +81,29 @@ class RoomPlanningRepository(private val database: PlanningDatabase) : PlanningR
         check(dao.deletePlannedMeal(id) == 1) { "Meal no longer exists or has a recorded outcome" }
     }
     override suspend fun addActivity(activity: ActivityPlan) = dao.insert(activity.entity())
+    override suspend fun getActivity(id: String): ActivityPlan? = dao.activityById(id)?.model()
+    override suspend fun savedActivities(): List<SavedActivity> = dao.savedActivities().map { it.model() }
+
+    override suspend fun savePlannedActivity(activity: ActivityPlan, isNew: Boolean, saveForReuse: Boolean) = database.withTransaction {
+        check(activity.outcome == ActivityOutcome.PLANNED) { "Recorded activities cannot be edited" }
+        if (isNew) {
+            check(activity.rescheduledFromId == null) { "Rescheduling is not a planning create operation" }
+            dao.insert(activity.entity())
+        } else {
+            val existing = checkNotNull(dao.activityById(activity.id))
+            check(existing.rescheduledFromId == activity.rescheduledFromId) { "Planning cannot change historical linkage" }
+            check(dao.updatePlannedActivity(activity.id, activity.date.toEpochDay(), activity.time?.toNanoOfDay(), activity.name, activity.type.name, activity.notes) == 1) {
+                "Activity no longer exists or has a recorded outcome"
+            }
+        }
+        if (saveForReuse && dao.savedActivities().none { it.name == activity.name && it.type == activity.type.name && it.notes == activity.notes }) {
+            dao.insert(SavedActivity(name = activity.name, type = activity.type, notes = activity.notes).entity())
+        }
+    }
+
+    override suspend fun deletePlannedActivity(id: String) {
+        check(dao.deletePlannedActivity(id) == 1) { "Activity no longer exists or has a recorded outcome" }
+    }
 
     override suspend fun recordChangedMeal(id: String, actual: ActualMeal) {
         check(dao.recordChangedMeal(id, actual.text, actual.time?.toNanoOfDay(), actual.label, actual.notes) == 1) {

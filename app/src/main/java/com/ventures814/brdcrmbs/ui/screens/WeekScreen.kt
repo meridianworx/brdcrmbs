@@ -59,7 +59,9 @@ fun WeekScreen(
     onAddFast: () -> Unit = {},
     onEditFast: (String) -> Unit = {},
     onAddMeal: () -> Unit = {},
-    onEditMeal: (String) -> Unit = {}
+    onEditMeal: (String) -> Unit = {},
+    onAddActivity: () -> Unit = {},
+    onEditActivity: (String) -> Unit = {}
 ) {
     Column(
         modifier = modifier.verticalScroll(rememberScrollState()).padding(16.dp),
@@ -97,8 +99,8 @@ fun WeekScreen(
         PlanningSectionCard(stringResource(R.string.week_meals, state.meals.size), R.drawable.ic_meal, onAddMeal) {
             PlanningRows(state.meals, onEditMeal)
         }
-        PlanningSectionCard(stringResource(R.string.week_activity, state.activities.size), R.drawable.ic_activity) {
-            PlanningRows(state.activities)
+        PlanningSectionCard(stringResource(R.string.week_activity, state.activities.size), R.drawable.ic_activity, onAddActivity) {
+            PlanningRows(state.activities, onEditActivity)
         }
     }
 }

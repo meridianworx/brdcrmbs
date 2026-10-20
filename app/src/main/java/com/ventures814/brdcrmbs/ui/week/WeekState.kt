@@ -56,7 +56,7 @@ fun presentWeek(
         } + dayPlans.noFast.map { WeekRow("No fast", "Planned", planId = it.id) },
         dayPlans.meals.map { WeekRow(it.text, it.label.orEmpty(), it.time?.format(time), planId = it.id) },
         dayPlans.activities.map {
-            WeekRow(it.name, if (it.type == ActivityType.WORKOUT) "Workout" else "Activity", it.time?.format(time))
+            WeekRow(it.name, if (it.type == ActivityType.WORKOUT) "Workout" else "Activity", it.time?.format(time), planId = it.id)
         }
     )
 }

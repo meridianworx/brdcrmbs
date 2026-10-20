@@ -23,6 +23,8 @@ import kotlinx.coroutines.CancellationException
 import com.ventures814.brdcrmbs.ui.fasting.FastingDraft
 import com.ventures814.brdcrmbs.ui.meals.MealDraft
 import com.ventures814.brdcrmbs.domain.SavedMeal
+import com.ventures814.brdcrmbs.domain.SavedActivity
+import com.ventures814.brdcrmbs.ui.activities.ActivityDraft
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class WeekViewModel(
@@ -39,6 +41,87 @@ class WeekViewModel(
     val editorBusy = MutableStateFlow(false)
     val editorError = MutableStateFlow<String?>(null)
     private var loadJob: Job? = null
+
+    val activityEditor = savedState.getStateFlow<ActivityDraft?>("activityDraft", null)
+    val activityLoading = MutableStateFlow(false)
+    val activityBusy = MutableStateFlow(false)
+    val activityError = MutableStateFlow<String?>(null)
+    val savedActivities = MutableStateFlow<List<SavedActivity>>(emptyList())
+    private var activityLoadJob: Job? = null
+
+    init {
+        if (activityEditor.value != null) loadActivityEditor(null)
+    }
+
+    fun addActivity() {
+        savedState["activityDraft"] = ActivityDraft(date = LocalDate.ofEpochDay(weekStart.value).plusDays(selectedDay.value.toLong()))
+        loadActivityEditor(null)
+    }
+
+    fun editActivity(id: String) = loadActivityEditor(id)
+
+    private fun loadActivityEditor(id: String?) {
+        activityLoadJob?.cancel()
+        activityLoading.value = true
+        activityError.value = null
+        savedActivities.value = emptyList()
+        activityLoadJob = viewModelScope.launch {
+            try {
+                if (id != null) savedState["activityDraft"] = ActivityDraft.from(checkNotNull(repository.getActivity(id)))
+                savedActivities.value = repository.savedActivities()
+            } catch (e: CancellationException) { throw e
+            } catch (_: Exception) { activityError.value = "Could not load activity details or Saved Activities. Return to Week and try again."
+            } finally { activityLoading.value = false }
+        }
+    }
+
+    fun closeActivityEditor() {
+        if (activityBusy.value) return
+        activityLoadJob?.cancel()
+        activityLoading.value = false
+        activityError.value = null
+        savedState["activityDraft"] = null
+    }
+
+    fun updateActivityDraft(change: (ActivityDraft) -> ActivityDraft) {
+        if (activityBusy.value || activityLoading.value) return
+        val draft = activityEditor.value ?: return
+        if (!draft.editable) return
+        savedState["activityDraft"] = change(draft)
+    }
+
+    fun saveActivity() {
+        val draft = activityEditor.value ?: return
+        if (activityBusy.value || activityLoading.value) return
+        val activity = try { draft.toPlan() } catch (e: IllegalArgumentException) {
+            activityError.value = e.message; return
+        } catch (e: IllegalStateException) { activityError.value = e.message; return }
+        activityBusy.value = true
+        viewModelScope.launch {
+            try {
+                repository.savePlannedActivity(activity, draft.isNew, draft.saveForReuse)
+                savedState["activityDraft"] = null
+                activityError.value = null
+            } catch (e: CancellationException) { throw e
+            } catch (_: Exception) { activityError.value = "Could not save the activity. Your entries are retained; please try again."
+            } finally { activityBusy.value = false }
+        }
+    }
+
+    fun deleteActivity() {
+        val draft = activityEditor.value ?: return
+        if (draft.isNew || !draft.editable || activityBusy.value || activityLoading.value) return
+        activityBusy.value = true
+        viewModelScope.launch {
+            try {
+                repository.deletePlannedActivity(draft.id)
+                savedState["activityDraft"] = null
+                activityError.value = null
+            } catch (e: CancellationException) { throw e
+            } catch (_: Exception) { activityError.value = "Could not delete the activity. Your saved activity has been retained."
+            } finally { activityBusy.value = false }
+        }
+    }
 
     val mealEditor = savedState.getStateFlow<MealDraft?>("mealDraft", null)
     val mealLoading = MutableStateFlow(false)

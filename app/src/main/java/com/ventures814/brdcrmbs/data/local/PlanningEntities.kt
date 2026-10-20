@@ -10,6 +10,17 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 
+@Entity(tableName = "saved_activities")
+data class SavedActivityEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val type: String,
+    val notes: String?
+)
+
+internal fun SavedActivity.entity() = SavedActivityEntity(id, name, type.name, notes)
+internal fun SavedActivityEntity.model() = SavedActivity(id, name, ActivityType.valueOf(type), notes)
+
 @Entity(tableName = "saved_meals")
 data class SavedMealEntity(
     @PrimaryKey val id: String,

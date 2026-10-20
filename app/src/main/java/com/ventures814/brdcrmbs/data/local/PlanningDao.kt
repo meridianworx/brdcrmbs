@@ -7,6 +7,17 @@ import androidx.room.Update
 
 @Dao
 interface PlanningDao {
+    @Insert suspend fun insert(activity: SavedActivityEntity)
+    @Query("SELECT * FROM saved_activities ORDER BY name COLLATE NOCASE, id")
+    suspend fun savedActivities(): List<SavedActivityEntity>
+    @Query("SELECT * FROM activity_plans WHERE id = :id")
+    suspend fun activityById(id: String): ActivityEntity?
+    // Neither outcome nor rescheduledFromId may be rewritten by planning edits.
+    @Query("""UPDATE activity_plans SET dateEpochDay = :date, timeNanoOfDay = :time,
+        name = :name, type = :type, notes = :notes WHERE id = :id AND outcome = 'PLANNED'""")
+    suspend fun updatePlannedActivity(id: String, date: Long, time: Long?, name: String, type: String, notes: String?): Int
+    @Query("DELETE FROM activity_plans WHERE id = :id AND outcome = 'PLANNED'")
+    suspend fun deletePlannedActivity(id: String): Int
     @Insert suspend fun insert(event: FastingEntity)
     @Insert suspend fun insert(meal: MealEntity)
     @Insert suspend fun insert(activity: ActivityEntity)
