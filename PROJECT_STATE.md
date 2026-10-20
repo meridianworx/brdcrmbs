@@ -9,7 +9,7 @@
 - **Package name:** com.ventures814.brdcrmbs (namespace and application ID)
 - **Platform:** Android
 - **Repository:** https://github.com/meridianworx/brdcrmbs.git (origin; primary branch main)
-- **Development stage:** Android baseline built and verified; product feature implementation has not begun.
+- **Development stage:** App shell/navigation and approved visual foundation implemented; real feature workflows have not begun.
 
 # Purpose
 
@@ -206,7 +206,10 @@ Product/planning work completed:
 - Baseline visual direction approved
 - 12-screen UI/UX baseline approved
 
-No Android feature implementation has begun yet.
+Android foundation implemented:
+- Four-destination app shell with TodayScreen, WeekScreen, ProgressScreen, and SettingsScreen placeholders.
+- Approved dark charcoal / near-black theme, bright green accent, high-contrast typography, rounded cards, and simple line icons.
+- No real planning, adherence, calendar, settings, or persistence behavior implemented.
 
 ## In Progress
 
@@ -432,7 +435,7 @@ Future health measurements must not automatically control the user's plan.
 
 # Current Development Focus
 
-Baseline initialization is complete locally. Preserve the starter app until the Product Owner specifies the first controlled implementation task. No product feature work is authorized by baseline initialization.
+App shell/navigation and visual foundation milestone complete. Next focus: the first real feature workflow, to be specified in a separate controlled task by the Product Owner. Feature behavior and persistence remain unimplemented. Physical-device review of the shell remains pending.
 
 # Recent Milestones
 
@@ -456,3 +459,15 @@ Baseline initialization is complete locally. Preserve the starter app until the 
 - Build warning: libandroidx.graphics.path.so could not be stripped and was packaged unchanged. Device/instrumented testing was not run; release output is unsigned.
 - Baseline milestone: project structure and all three root control documents verified; no brdcrmbs product features implemented. GitHub publication is verified separately after the baseline commit.
 - Lint completed with 0 errors and 11 warnings: redundant activity label, seven unused starter colors, and three dependency update notices. The single starter unit test passed.
+
+## App Shell and Visual Foundation — 2026-10-19
+
+- Replaced Hello Android with a Material 3 scaffold and four bottom destinations in the exact order Today / Week / Progress / Settings.
+- Today is the initial destination. Selected-tab UI state uses rememberSaveable for activity recreation; no durable product persistence was added.
+- Added TodayScreen, WeekScreen, ProgressScreen, and SettingsScreen as static placeholders sharing a small presentational layout.
+- Implemented near-black background, charcoal cards, bright green accents, off-white typography, rounded shapes, line icons, and dark system-bar/launch presentation. System wallpaper colors do not override the approved palette.
+- Retained the existing Material 3 typography baseline. Content scrolls for smaller screens/larger text; navigation remains in the scaffold bottom bar with system insets.
+- Added a Compose instrumentation test for all four destinations and selected-tab restoration; compiled successfully. No connected Android device/emulator was available, so UI tests and visual/device acceptance were not run.
+- Validation: debug build, existing unit test, debug lint, and debug Android test APK build passed. No new dependencies or product infrastructure added.
+- Scope remains shell only: no planning, adherence, calendar, forms, settings actions, reminders, backup/restore, databases, repositories, or meal photos.
+- Debug lint reports 0 errors and the same 11 baseline warnings (redundant label, unused starter colors, dependency update notices); no dependency upgrades or unrelated cleanup performed.
