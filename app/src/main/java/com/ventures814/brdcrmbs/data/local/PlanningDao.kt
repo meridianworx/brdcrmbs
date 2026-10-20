@@ -12,6 +12,19 @@ interface PlanningDao {
     @Insert suspend fun insert(activity: ActivityEntity)
     @Insert suspend fun insert(plan: NoFastEntity)
     @Update suspend fun update(plan: NoFastEntity): Int
+    @Insert suspend fun insert(meal: SavedMealEntity)
+
+    @Query("SELECT * FROM saved_meals ORDER BY text COLLATE NOCASE, id")
+    suspend fun savedMeals(): List<SavedMealEntity>
+    @Query("SELECT * FROM meal_plans WHERE id = :id")
+    suspend fun mealById(id: String): MealEntity?
+    // Planning mutations must never overwrite outcome or actual-meal columns.
+    @Query("""UPDATE meal_plans SET dateEpochDay = :date, timeNanoOfDay = :time,
+        plannedText = :text, label = :label, notes = :notes
+        WHERE id = :id AND outcome = 'PLANNED' AND actualText IS NULL""")
+    suspend fun updatePlannedMeal(id: String, date: Long, time: Long?, text: String, label: String?, notes: String?): Int
+    @Query("DELETE FROM meal_plans WHERE id = :id AND outcome = 'PLANNED' AND actualText IS NULL")
+    suspend fun deletePlannedMeal(id: String): Int
 
     @Query("SELECT * FROM fasting_events WHERE id = :id")
     suspend fun fastingById(id: String): FastingEntity?

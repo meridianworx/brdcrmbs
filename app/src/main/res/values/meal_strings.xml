@@ -1,0 +1,25 @@
+<resources>
+    <string name="meal_back">Back to Week</string>
+    <string name="meal_add_title">Add Meal</string>
+    <string name="meal_edit_title">Edit Meal</string>
+    <string name="meal_name">Meal (required)</string>
+    <string name="meal_label">Type / Label (optional)</string>
+    <string name="meal_notes">Notes (optional)</string>
+    <string name="meal_date_value">Date: %1$s</string>
+    <string name="meal_time_value">Time: %1$s</string>
+    <string name="meal_no_time">Time (optional): Not set</string>
+    <string name="meal_clear_time">Remove time</string>
+    <string name="meal_time_title">Meal time</string>
+    <string name="meal_save_reuse">Save for reuse</string>
+    <string name="meal_choose_saved">Choose Saved Meal</string>
+    <string name="meal_saved_title">Saved Meals</string>
+    <string name="meal_save">Save</string>
+    <string name="meal_saving">Saving…</string>
+    <string name="meal_delete">Delete</string>
+    <string name="meal_delete_title">Delete planned meal?</string>
+    <string name="meal_delete_message">Only this planned meal will be deleted. Saved Meals remain available.</string>
+    <string name="meal_cancel">Cancel</string>
+    <string name="meal_ok">OK</string>
+    <string name="meal_required">Meal is required.</string>
+    <string name="meal_read_only">This meal has recorded history and cannot be edited or deleted here.</string>
+</resources>

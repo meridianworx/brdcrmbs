@@ -10,6 +10,17 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 
+@Entity(tableName = "saved_meals")
+data class SavedMealEntity(
+    @PrimaryKey val id: String,
+    val text: String,
+    val label: String?,
+    val notes: String?
+)
+
+internal fun SavedMeal.entity() = SavedMealEntity(id, text, label, notes)
+internal fun SavedMealEntity.model() = SavedMeal(id, text, label, notes)
+
 @Entity(tableName = "no_fast_plans", indices = [Index("dateEpochDay")])
 data class NoFastEntity(
     @PrimaryKey val id: String,

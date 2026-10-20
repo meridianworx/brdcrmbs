@@ -21,6 +21,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
 import com.ventures814.brdcrmbs.ui.fasting.FastingDraft
+import com.ventures814.brdcrmbs.ui.meals.MealDraft
+import com.ventures814.brdcrmbs.domain.SavedMeal
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class WeekViewModel(
@@ -37,6 +39,87 @@ class WeekViewModel(
     val editorBusy = MutableStateFlow(false)
     val editorError = MutableStateFlow<String?>(null)
     private var loadJob: Job? = null
+
+    val mealEditor = savedState.getStateFlow<MealDraft?>("mealDraft", null)
+    val mealLoading = MutableStateFlow(false)
+    val mealBusy = MutableStateFlow(false)
+    val mealError = MutableStateFlow<String?>(null)
+    val savedMeals = MutableStateFlow<List<SavedMeal>>(emptyList())
+    private var mealLoadJob: Job? = null
+
+    init {
+        if (mealEditor.value != null) loadMealEditor(null)
+    }
+
+    fun addMeal() {
+        savedState["mealDraft"] = MealDraft(date = LocalDate.ofEpochDay(weekStart.value).plusDays(selectedDay.value.toLong()))
+        loadMealEditor(null)
+    }
+
+    fun editMeal(id: String) = loadMealEditor(id)
+
+    private fun loadMealEditor(id: String?) {
+        mealLoadJob?.cancel()
+        mealLoading.value = true
+        mealError.value = null
+        savedMeals.value = emptyList()
+        mealLoadJob = viewModelScope.launch {
+            try {
+                if (id != null) savedState["mealDraft"] = MealDraft.from(checkNotNull(repository.getMeal(id)))
+                savedMeals.value = repository.savedMeals()
+            } catch (e: CancellationException) { throw e
+            } catch (_: Exception) { mealError.value = "Could not load meal details or Saved Meals. Return to Week and try again."
+            } finally { mealLoading.value = false }
+        }
+    }
+
+    fun closeMealEditor() {
+        if (mealBusy.value) return
+        mealLoadJob?.cancel()
+        mealLoading.value = false
+        mealError.value = null
+        savedState["mealDraft"] = null
+    }
+
+    fun updateMealDraft(change: (MealDraft) -> MealDraft) {
+        if (mealBusy.value || mealLoading.value) return
+        val draft = mealEditor.value ?: return
+        if (!draft.editable) return
+        savedState["mealDraft"] = change(draft)
+    }
+
+    fun saveMeal() {
+        val draft = mealEditor.value ?: return
+        if (mealBusy.value || mealLoading.value) return
+        val meal = try { draft.toPlan() } catch (e: IllegalArgumentException) {
+            mealError.value = e.message; return
+        } catch (e: IllegalStateException) { mealError.value = e.message; return }
+        mealBusy.value = true
+        viewModelScope.launch {
+            try {
+                repository.savePlannedMeal(meal, draft.isNew, draft.saveForReuse)
+                savedState["mealDraft"] = null
+                mealError.value = null
+            } catch (e: CancellationException) { throw e
+            } catch (_: Exception) { mealError.value = "Could not save the meal. Your entries are retained; please try again."
+            } finally { mealBusy.value = false }
+        }
+    }
+
+    fun deleteMeal() {
+        val draft = mealEditor.value ?: return
+        if (draft.isNew || !draft.editable || mealBusy.value || mealLoading.value) return
+        mealBusy.value = true
+        viewModelScope.launch {
+            try {
+                repository.deletePlannedMeal(draft.id)
+                savedState["mealDraft"] = null
+                mealError.value = null
+            } catch (e: CancellationException) { throw e
+            } catch (_: Exception) { mealError.value = "Could not delete the meal. Your saved meal has been retained."
+            } finally { mealBusy.value = false }
+        }
+    }
 
     fun addFast() {
         loadJob?.cancel()

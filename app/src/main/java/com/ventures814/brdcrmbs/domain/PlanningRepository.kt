@@ -13,6 +13,10 @@ interface PlanningRepository {
     suspend fun updateFastingPlan(plan: FastingPlan)
     suspend fun deleteFastingPlan(id: String)
     suspend fun addMeal(meal: MealPlan)
+    suspend fun getMeal(id: String): MealPlan?
+    suspend fun savePlannedMeal(meal: MealPlan, isNew: Boolean, saveForReuse: Boolean = false)
+    suspend fun deletePlannedMeal(id: String)
+    suspend fun savedMeals(): List<SavedMeal>
     suspend fun addActivity(activity: ActivityPlan)
     suspend fun recordChangedMeal(id: String, actual: ActualMeal)
 }

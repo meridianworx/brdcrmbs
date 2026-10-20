@@ -18,6 +18,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ventures814.brdcrmbs.BrdcrmbsApplication
 import com.ventures814.brdcrmbs.ui.screens.WeekScreen
 import com.ventures814.brdcrmbs.ui.fasting.FastingEditorScreen
+import com.ventures814.brdcrmbs.ui.meals.MealEditorScreen
 
 @Composable
 fun rememberWeekModel(): WeekViewModel {
@@ -38,10 +39,26 @@ fun WeekRoute(
     val loading by model.editorLoading.collectAsStateWithLifecycle()
     val busy by model.editorBusy.collectAsStateWithLifecycle()
     val error by model.editorError.collectAsStateWithLifecycle()
-    val editing = draft != null || loading
+    val meal by model.mealEditor.collectAsStateWithLifecycle()
+    val mealLoading by model.mealLoading.collectAsStateWithLifecycle()
+    val mealBusy by model.mealBusy.collectAsStateWithLifecycle()
+    val mealError by model.mealError.collectAsStateWithLifecycle()
+    val savedMeals by model.savedMeals.collectAsStateWithLifecycle()
+    val mealEditing = meal != null || mealLoading || mealError != null
+    val editing = draft != null || loading || mealEditing
     LaunchedEffect(editing) { onEditorVisible(editing) }
     DisposableEffect(Unit) { onDispose { onEditorVisible(false) } }
-    BackHandler(editing) { model.closeEditor() }
+    BackHandler(editing) { if (mealEditing) model.closeMealEditor() else model.closeEditor() }
+    if (mealEditing) {
+        if (mealLoading || meal == null) {
+            Column(modifier) {
+                TextButton(onClick = model::closeMealEditor) { Text("Back to Week") }
+                Text(mealError ?: "Loading meal…")
+            }
+        } else MealEditorScreen(meal!!, savedMeals, mealBusy, mealError, model::updateMealDraft,
+            model::saveMeal, model::deleteMeal, model::closeMealEditor, modifier)
+        return
+    }
     if (draft != null) {
         FastingEditorScreen(draft!!, busy, error, model::updateDraft, model::saveFast, model::deleteFast, model::closeEditor, modifier)
         return
@@ -67,6 +84,8 @@ fun WeekRoute(
         onPreviousWeek = { model.moveWeek(-1) },
         onNextWeek = { model.moveWeek(1) },
         onAddFast = model::addFast,
-        onEditFast = model::editFast
+        onEditFast = model::editFast,
+        onAddMeal = model::addMeal,
+        onEditMeal = model::editMeal
     )
 }

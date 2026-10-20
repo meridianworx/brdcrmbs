@@ -59,6 +59,27 @@ class RoomPlanningRepository(private val database: PlanningDatabase) : PlanningR
         }
     }
     override suspend fun addMeal(meal: MealPlan) = dao.insert(meal.entity())
+    override suspend fun getMeal(id: String): MealPlan? = dao.mealById(id)?.model()
+
+    override suspend fun savedMeals(): List<SavedMeal> = dao.savedMeals().map { it.model() }
+
+    override suspend fun savePlannedMeal(meal: MealPlan, isNew: Boolean, saveForReuse: Boolean) = database.withTransaction {
+        check(meal.outcome == MealOutcome.PLANNED && meal.actual == null) { "Recorded meals cannot be edited" }
+        if (isNew) dao.insert(meal.entity()) else {
+            check(dao.updatePlannedMeal(meal.id, meal.date.toEpochDay(), meal.time?.toNanoOfDay(), meal.text, meal.label, meal.notes) == 1) {
+                "Meal no longer exists or has a recorded outcome"
+            }
+        }
+        if (saveForReuse) {
+            // Exact reusable details are deduplicated inside the same transaction as the plan.
+            val existing = dao.savedMeals().any { it.text == meal.text && it.label == meal.label && it.notes == meal.notes }
+            if (!existing) dao.insert(SavedMeal(text = meal.text, label = meal.label, notes = meal.notes).entity())
+        }
+    }
+
+    override suspend fun deletePlannedMeal(id: String) {
+        check(dao.deletePlannedMeal(id) == 1) { "Meal no longer exists or has a recorded outcome" }
+    }
     override suspend fun addActivity(activity: ActivityPlan) = dao.insert(activity.entity())
 
     override suspend fun recordChangedMeal(id: String, actual: ActualMeal) {

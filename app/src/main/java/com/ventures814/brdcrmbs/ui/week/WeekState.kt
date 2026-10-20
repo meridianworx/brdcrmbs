@@ -54,7 +54,7 @@ fun presentWeek(
             val duration = if (minutes % 60 == 0L) "${minutes / 60} hour fast" else "${minutes / 60}h ${minutes % 60}m fast"
             WeekRow("$startLabel → $endLabel", listOfNotNull(event.preset, duration).joinToString(" · "), planId = event.id)
         } + dayPlans.noFast.map { WeekRow("No fast", "Planned", planId = it.id) },
-        dayPlans.meals.map { WeekRow(it.text, it.label.orEmpty(), it.time?.format(time)) },
+        dayPlans.meals.map { WeekRow(it.text, it.label.orEmpty(), it.time?.format(time), planId = it.id) },
         dayPlans.activities.map {
             WeekRow(it.name, if (it.type == ActivityType.WORKOUT) "Workout" else "Activity", it.time?.format(time))
         }

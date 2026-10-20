@@ -7,11 +7,16 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [FastingEntity::class, MealEntity::class, ActivityEntity::class, NoFastEntity::class], version = 2, exportSchema = true)
+@Database(entities = [FastingEntity::class, MealEntity::class, ActivityEntity::class, NoFastEntity::class, SavedMealEntity::class], version = 3, exportSchema = true)
 abstract class PlanningDatabase : RoomDatabase() {
     abstract fun planningDao(): PlanningDao
 
     companion object {
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS saved_meals (id TEXT NOT NULL, text TEXT NOT NULL, label TEXT, notes TEXT, PRIMARY KEY(id))")
+            }
+        }
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS no_fast_plans (id TEXT NOT NULL, dateEpochDay INTEGER NOT NULL, zoneId TEXT NOT NULL, notes TEXT, PRIMARY KEY(id))")
@@ -20,6 +25,6 @@ abstract class PlanningDatabase : RoomDatabase() {
         }
         fun open(context: Context): PlanningDatabase = Room.databaseBuilder(
             context.applicationContext, PlanningDatabase::class.java, "brdcrmbs-planning.db"
-        ).addMigrations(MIGRATION_1_2).build() // No destructive migration fallback.
+        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build() // No destructive migration fallback.
     }
 }

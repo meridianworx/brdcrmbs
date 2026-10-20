@@ -9,7 +9,7 @@
 - **Package name:** com.ventures814.brdcrmbs (namespace and application ID)
 - **Platform:** Android
 - **Repository:** https://github.com/meridianworx/brdcrmbs.git (origin; primary branch main)
-- **Development stage:** Week UI baseline remains approved/locked. Week fasting Add/Edit/Delete implemented; physical-device acceptance of this workflow is pending. Complete Week workflows remain unfinished.
+- **Development stage:** Week UI and fasting Add/Edit/Delete are physically accepted and approved/locked. Week meal planning CRUD and Saved Meal reuse implemented; Meal physical-device acceptance pending. Complete Week workflows remain unfinished.
 
 # Purpose
 
@@ -84,7 +84,7 @@ Bottom navigation contains exactly four primary destinations:
 - Core functionality should work offline.
 - User-created plans and history must survive app restarts/process death.
 - Persistent structured storage is required.
-- Room over local SQLite is the durable planning source of truth. Initial database version: 1; current database version: 2 with explicit 1→2 migration for dated No fast plans. Both schema JSON versions are exported to app/schemas and tracked in Git. No destructive migration fallback; future schema changes require explicit, tested migrations.
+- Room over local SQLite is the durable planning source of truth. Initial database version: 1; current database version: 3 with explicit 1→2 migration for dated No fast plans and 2→3 migration for Saved Meals. All schema JSON versions are exported to app/schemas and tracked in Git. No destructive migration fallback; future schema changes require explicit, tested migrations.
 
 ## Data Models
 
@@ -209,11 +209,12 @@ Product/planning work completed:
 Android foundation implemented:
 - Four-destination app shell; TodayScreen, ProgressScreen, and SettingsScreen remain placeholders. The approved My Week layout now loads repository-backed planning data.
 - Approved dark charcoal / near-black theme, bright green accent, high-contrast typography, rounded cards, and simple line icons.
-- Week persistence/read-side integration and fasting Add/Edit/Delete implemented. Meal/activity editors, adherence UI, Progress calendar, and Settings behavior remain unimplemented.
+- Week persistence/read-side integration and fasting Add/Edit/Delete implemented; fasting CRUD passed physical-device Product Owner acceptance and is approved/locked.
+- Meal planning Add/Edit/Delete and compact Saved Meal selection/persistence implemented. Activity editors, adherence UI, Progress calendar, and Settings behavior remain unimplemented.
 
 ## In Progress
 
-- Fasting Add/Edit/Delete physical-device acceptance pending. The workflow and the complete Week feature are not marked approved/locked or finished.
+- Meal Add/Edit/Delete physical-device acceptance pending. Meal workflow is not approved/locked; the complete Week feature remains unfinished.
 
 ## Planned
 
@@ -388,6 +389,7 @@ The following have Product Owner approval and must not be changed casually:
 - Detailed workout programming/logging remains outside brdcrmbs.
 - Approved UI must not be casually redesigned during implementation.
 - Week My Week UI baseline passed physical-device acceptance and is approved/locked by the Product Owner. Data wiring must preserve its layout/theme.
+- Fasting Add/Edit/Delete passed physical-device Product Owner acceptance and is approved/locked, as confirmed in the Meal workflow request on 2026-10-20.
 
 # Approved UI / UX
 
@@ -436,7 +438,7 @@ Future health measurements must not automatically control the user's plan.
 
 # Current Development Focus
 
-Product Owner physical-device acceptance of Week fasting Add/Edit/Delete. Preserve the locked Week layout. Meal/activity editors, Copy Day, Copy to Selected Days, Repeat Last Week, rescheduling, Today adherence, Progress, reminders, and Backup & Restore remain unimplemented. The complete Week feature is not finished.
+Product Owner physical-device acceptance of Week meal Add/Edit/Delete and Saved Meal reuse. Preserve locked Week and Fasting behavior. Activity editors, Change Meal / Log Actual, Copy Day, Copy to Selected Days, Repeat Last Week, rescheduling, Today adherence, Progress, reminders, Backup & Restore, and Settings Saved Meals management remain unimplemented. The complete Week feature is not finished.
 
 # Recent Milestones
 
@@ -526,3 +528,17 @@ Product Owner physical-device acceptance of Week fasting Add/Edit/Delete. Preser
 - The first resumed connected-test run also selected a newly connected physical Pixel 6 Pro. Its keyguard was confirmed showing; all seven Compose UI tests failed to expose/launch interactive content, while its fifteen non-UI tests (including the actual migration test) passed. No phone lock settings were changed. Final automated UI validation targets emulator-5554 explicitly; Product Owner physical-device acceptance remains pending.
 - Final validation passed: :app:assembleDebug, :app:testDebugUnitTest (13 tests, 0 failures/errors), :app:lintDebug (0 errors, 11 existing warnings), and :app:assembleDebugAndroidTest. With ANDROID_SERIAL=emulator-5554, :app:connectedDebugAndroidTest completed successfully: 22 tests, 0 skipped/failed, including migration, persistence, fasting workflow/UI, and existing Week/app-shell regressions. No assertions were disabled.
 - Remaining notices: existing redundant activity label, seven unused starter colors, three dependency update notices, and the non-blocking native-library stripping notice. No unresolved automated build/test failures remain on the emulator. Physical-device Product Owner acceptance is still pending; this workflow is not approved/locked and the remaining Week workflows are not implemented.
+
+## Week Meal Planning Add / Edit / Delete — 2026-10-20
+
+- Product Owner confirmed physical-device acceptance of Fasting CRUD in this task request; Fasting CRUD is now approved/locked. Earlier pending-acceptance statements above are historical. Existing fasting draft/editor behavior and tests are retained without changes.
+- Added a focused text-only Add Meal / Edit Meal editor consistent with the existing charcoal/green Material 3 styling. Required meal text and date; optional local time, free-text type/label, and notes. Week-selected day supplies the initial date. No time is assigned unless the user confirms one; an assigned time can be removed. Date/time picker cancellation does not change the draft.
+- Save persists a new PLANNED meal or updates the exact existing ID, then returns to Week. Confirmed Delete removes only that planned meal. Week retains its approved layout and text-row treatment, renders optional time/label, and reacts with the selected day's current meal count. Workout / Activity actions remain inert.
+- Added SavedMeal / saved_meals with stable ID, text, optional label, and optional notes. A Saved Meal has no date/time/outcome and is not a scheduled plan. Choose Saved Meal opens a compact scrollable selection dialog and fills text/label/notes while retaining draft identity/date/time. The user can change populated fields before Save. Save for reuse is opt-in for either new or edited plans; the plan and reusable details are saved atomically, deduplicating exact text/label/notes matches. Changing a scheduled meal does not rewrite an existing Saved Meal; deleting a scheduled meal leaves Saved Meals intact. Settings management remains deferred.
+- Reused existing meal_plans columns without alteration. Database version 3 adds only saved_meals via explicit MIGRATION_2_3; production registers the complete 1→2→3 chain. Version 1/2 schemas are unchanged and version 3 is exported. No destructive fallback or new dependencies.
+- Repository additions: getMeal, savePlannedMeal (insert/update plus optional reusable save in one transaction), deletePlannedMeal, and savedMeals. Planning updates target planned columns only and guard PLANNED/outcome plus absent actual text in SQL. Done/Changed/Missed records are read-only in the editor and cannot be overwritten/deleted through planning CRUD, including a stale editor after an outcome changes. Original planned and actual Changed-meal details/outcomes remain intact; no adherence UI was implemented.
+- Added a serializable MealDraft retained by SavedStateHandle, meal loading/busy/error state, and Week route integration using the existing Compose → ViewModel → repository → Room boundary. Bottom navigation is hidden during the focused editor and restored on return; Back discards unsaved entries without database writes. Save errors retain form entries; busy operations block duplicate submits and Back.
+- Dates remain LocalDate/epoch-day and optional times remain LocalTime/nanoseconds-of-day, including existing sub-minute precision on unchanged edits. No zone conversion is added for local meal plans. Tests cover month/year boundaries, selected-day association, optional fields, reload durability, identity-preserving update, selected deletion, reactive counts, reusable selection/deduplication, draft recreation, historical/stale-edit protection, and both migration paths preserving fasting/history.
+- Meal physical-device Product Owner acceptance remains pending; this workflow is not approved/locked and the complete Week feature is not finished. Remaining scope includes Workout / Activity CRUD, Change Meal / Log Actual, copying/repeat workflows, Today/Progress, reminders, Backup & Restore, and Settings Saved Meals management.
+- Final validation passed using the repository wrapper: :app:assembleDebug, :app:testDebugUnitTest (17 tests, 0 failures/errors), :app:lintDebug (0 errors, 11 existing warnings), :app:assembleDebugAndroidTest, and :app:connectedDebugAndroidTest with ANDROID_SERIAL=emulator-5554 (28 tests, 0 failures/errors/skipped). Existing fasting, Week, and shell tests passed unchanged; migration coverage exercises both 1→2→3 and 2→3. No assertions were disabled or weakened.
+- Validation environment: the first cold-boot emulator run passed 27/28 tests; the unchanged app-shell test briefly lacked Compose content amid heavy emulator frame delays. The final complete rerun passed after warm-up and proportionally reducing emulator pixel resolution/density while preserving logical layout size. Meal keyboard insets were included in that final build. Existing warnings remain the redundant activity label, seven unused starter colors, and three dependency update notices; no unresolved automated build/test failures remain. Physical-device acceptance of Meals is still pending.
