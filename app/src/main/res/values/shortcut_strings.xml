@@ -3,6 +3,9 @@
     <string name="copy_day">Copy Day</string>
     <string name="copy_days">Copy to Selected Days</string>
     <string name="repeat_week">Repeat Last Week</string>
+    <string name="copy_day_description">Copy this day\'s plan to another day</string>
+    <string name="copy_days_description">Copy this day\'s plan to multiple days</string>
+    <string name="repeat_week_description">Add last week\'s plan to this week</string>
     <string name="copy_source">Source: %1$s</string>
     <string name="copy_selected_count">Selected destinations: %1$d</string>
     <string name="copy_action">Copy</string>

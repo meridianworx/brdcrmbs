@@ -4,6 +4,8 @@ import java.io.Serializable
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
@@ -11,7 +13,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -32,14 +36,51 @@ data class ShortcutDraft(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlanningActions(enabled: Boolean, onOpen: (Shortcut) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    Box {
-        TextButton(onClick = { expanded = true }, enabled = enabled) { Text(stringResource(R.string.planning_actions)) }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            Shortcut.entries.forEach { shortcut ->
-                DropdownMenuItem(text = { Text(stringResource(shortcut.label())) }, onClick = { expanded = false; onOpen(shortcut) })
+    OutlinedButton(
+        onClick = { expanded = true }, enabled = enabled,
+        modifier = Modifier.testTag("planningActionsButton").heightIn(min = 48.dp),
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Icon(painterResource(R.drawable.ic_week), contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(stringResource(R.string.planning_actions))
+        Spacer(Modifier.width(8.dp))
+        Icon(painterResource(R.drawable.ic_chevron), contentDescription = null, modifier = Modifier.size(18.dp).rotate(90f))
+    }
+    if (expanded) {
+        ModalBottomSheet(
+            onDismissRequest = { expanded = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.testTag("planningActionsSheet")
+        ) {
+            Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 16.dp)) {
+                Text(stringResource(R.string.planning_actions), style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+                Shortcut.entries.forEach { shortcut ->
+                    ListItem(
+                        headlineContent = { Text(stringResource(shortcut.label())) },
+                        supportingContent = { Text(stringResource(when (shortcut) {
+                            Shortcut.COPY_DAY -> R.string.copy_day_description
+                            Shortcut.COPY_DAYS -> R.string.copy_days_description
+                            Shortcut.REPEAT_WEEK -> R.string.repeat_week_description
+                        })) },
+                        trailingContent = { Icon(painterResource(R.drawable.ic_chevron), contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp)) },
+                        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            supportingColor = MaterialTheme.colorScheme.onSurfaceVariant),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp)
+                            .clickable(role = Role.Button) { expanded = false; onOpen(shortcut) }
+                            .padding(horizontal = 8.dp)
+                    )
+                }
             }
         }
     }

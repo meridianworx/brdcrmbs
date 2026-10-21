@@ -9,6 +9,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
+import android.os.SystemClock
+import android.view.KeyEvent
 import com.ventures814.brdcrmbs.data.RoomPlanningRepository
 import com.ventures814.brdcrmbs.data.local.PlanningDatabase
 import com.ventures814.brdcrmbs.domain.*
@@ -36,12 +38,52 @@ class PlanningShortcutsUiTest {
     }
     @After fun cleanup() { compose.runOnIdle { store.clear() }; database.close() }
     private fun open(label: String) {
-        compose.onNodeWithText("Planning actions").performScrollTo().performClick()
-        compose.onNodeWithText(label).performClick()
+        compose.onNodeWithTag("planningActionsButton").performScrollTo().assertIsDisplayed().assertHasClickAction().performClick()
+        compose.onNodeWithTag("planningActionsSheet").assertIsDisplayed()
+        compose.onNodeWithText(label).assertIsDisplayed().performClick()
+        compose.onNodeWithTag("planningActionsSheet").assertDoesNotExist()
     }
     private fun confirm() {
         compose.onNodeWithTag("confirmPlanningCopy").performClick()
         compose.waitUntil(10_000) { !model.copyBusy.value && model.shortcut.value == null }
+    }
+    @Test fun actionSheetShowsAllChoicesAndBackPreservesSelectedDayWithoutWrites() {
+        compose.onNodeWithContentDescription(model.state.value.days[2].description).performClick()
+        compose.waitUntil(10_000) { model.state.value.selectedDay == 2 }
+        compose.onNodeWithTag("planningActionsButton").performScrollTo().assertIsDisplayed().assertIsEnabled()
+            .assertHasClickAction().performClick()
+        compose.onNodeWithTag("planningActionsSheet").assertIsDisplayed()
+        for (text in listOf("Copy Day", "Copy to Selected Days", "Repeat Last Week",
+            "Copy this day's plan to another day", "Copy this day's plan to multiple days", "Add last week's plan to this week")) {
+            compose.onNodeWithText(text).assertIsDisplayed()
+        }
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        val keyTime = SystemClock.uptimeMillis()
+        assertTrue(automation.injectInputEvent(KeyEvent(keyTime, keyTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK, 0), true))
+        assertTrue(automation.injectInputEvent(KeyEvent(keyTime, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK, 0), true))
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("planningActionsSheet").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithTag("planningActionsSheet").assertDoesNotExist()
+        assertEquals(2, model.state.value.selectedDay)
+        assertNull(model.shortcut.value)
+        runBlocking { assertEquals(1, repo.load(testRange, testZone).meals.size) }
+    }
+
+    @Test fun everySheetChoiceOpensExistingWorkflowForSelectedDayAndDisplayedWeek() {
+        compose.onNodeWithContentDescription("Next week").performScrollTo().performClick()
+        compose.waitUntil(10_000) { !model.state.value.loading && model.state.value.days.first().number == "26" }
+        compose.onNodeWithContentDescription(model.state.value.days[3].description).performClick()
+        compose.waitUntil(10_000) { model.state.value.selectedDay == 3 }
+        for ((label, mode) in listOf("Copy Day" to Shortcut.COPY_DAY,
+            "Copy to Selected Days" to Shortcut.COPY_DAYS, "Repeat Last Week" to Shortcut.REPEAT_WEEK)) {
+            open(label)
+            assertEquals(mode, model.shortcut.value!!.mode)
+            assertEquals(testDate.plusWeeks(1).plusDays(3), model.shortcut.value!!.source)
+            assertEquals(testDate.plusWeeks(1), model.shortcut.value!!.weekStart)
+            compose.onNodeWithTag("confirmPlanningCopy").assertExists()
+            compose.onNodeWithText("Cancel").performClick()
+            assertEquals(3, model.state.value.selectedDay)
+        }
+        runBlocking { assertTrue(repo.load(DateRange.weekContaining(testDate.plusWeeks(1)), testZone).meals.isEmpty()) }
     }
     @Test fun copyDayCancelThenCopyAndReactiveDaySelection() {
         open("Copy Day")
