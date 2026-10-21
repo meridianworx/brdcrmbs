@@ -30,7 +30,7 @@ import com.ventures814.brdcrmbs.ui.activities.ActivityDraft
 class WeekViewModel(
     private val repository: PlanningRepository,
     private val savedState: SavedStateHandle,
-    clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.systemDefaultZone()
 ) : ViewModel() {
     private val zone = clock.zone
     private val initialStart = DateRange.weekContaining(LocalDate.now(clock)).start.toEpochDay()
@@ -40,13 +40,27 @@ class WeekViewModel(
     val copyBusy = MutableStateFlow(false)
     val copyError = MutableStateFlow<String?>(null)
     val copyMessage = MutableStateFlow<String?>(null)
+    private var feedbackContext = 0L
+
+    fun clearCopyFeedback() {
+        feedbackContext++
+        copyMessage.value = null
+    }
+
+    fun resetToToday() {
+        val today = LocalDate.now(clock)
+        val start = DateRange.weekContaining(today).start
+        clearCopyFeedback()
+        savedState["weekStart"] = start.toEpochDay()
+        savedState["selectedDay"] = (today.toEpochDay() - start.toEpochDay()).toInt()
+    }
 
     fun openShortcut(mode: Shortcut) {
         if (copyBusy.value) return
         val start = LocalDate.ofEpochDay(weekStart.value)
         savedState["planningShortcut"] = ShortcutDraft(mode, start.plusDays(selectedDay.value.toLong()), start)
         copyError.value = null
-        copyMessage.value = null
+        clearCopyFeedback()
     }
 
     fun changeShortcut(change: (ShortcutDraft) -> ShortcutDraft) {
@@ -65,12 +79,15 @@ class WeekViewModel(
         if (request.mode != Shortcut.REPEAT_WEEK && request.destinations.isEmpty()) return
         copyBusy.value = true
         copyError.value = null
+        val resultContext = feedbackContext
         viewModelScope.launch {
             try {
                 val result = if (request.mode == Shortcut.REPEAT_WEEK) repository.repeatLastWeek(request.weekStart, zone)
                     else repository.copyDay(request.source, request.destinations, zone)
-                copyMessage.value = if (result.added == 0 && result.skipped == 0) "Nothing to copy. No plans were added."
-                    else "Added ${result.added} planned items; skipped ${result.skipped} identical Planned items."
+                if (resultContext == feedbackContext) {
+                    copyMessage.value = if (result.added == 0 && result.skipped == 0) "Nothing to copy. No plans were added."
+                        else "Added ${result.added} planned items; skipped ${result.skipped} identical Planned items."
+                }
                 savedState["planningShortcut"] = null
             } catch (e: CancellationException) { throw e
             } catch (e: IllegalArgumentException) { copyError.value = "Nothing was copied. ${e.message}"
@@ -348,6 +365,7 @@ class WeekViewModel(
     }
 
     fun moveWeek(offset: Long) {
+        clearCopyFeedback()
         savedState["weekStart"] = LocalDate.ofEpochDay(weekStart.value).plusWeeks(offset).toEpochDay()
     }
 }

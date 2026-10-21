@@ -33,8 +33,17 @@ fun rememberWeekModel(): WeekViewModel {
 fun WeekRoute(
     modifier: Modifier = Modifier,
     model: WeekViewModel = rememberWeekModel(),
-    onEditorVisible: (Boolean) -> Unit = {}
+    onEditorVisible: (Boolean) -> Unit = {},
+    resetToTodayRequested: Boolean = false,
+    onResetHandled: () -> Unit = {}
 ) {
+    LaunchedEffect(resetToTodayRequested) {
+        if (resetToTodayRequested) {
+            model.resetToToday()
+            onResetHandled()
+        }
+    }
+    DisposableEffect(model) { onDispose { model.clearCopyFeedback() } }
     val state by model.state.collectAsStateWithLifecycle()
     val shortcut by model.shortcut.collectAsStateWithLifecycle()
     val copyBusy by model.copyBusy.collectAsStateWithLifecycle()

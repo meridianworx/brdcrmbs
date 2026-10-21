@@ -37,6 +37,7 @@ private enum class Destination(@param:StringRes val label: Int, @param:DrawableR
 fun BrdcrmbsApp() {
     var selected by rememberSaveable { mutableStateOf(Destination.Today) }
     var editorVisible by remember { mutableStateOf(false) }
+    var resetWeekRequested by remember { mutableStateOf(false) }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
@@ -44,7 +45,10 @@ fun BrdcrmbsApp() {
                 Destination.entries.forEach { destination ->
                     NavigationBarItem(
                         selected = selected == destination,
-                        onClick = { selected = destination },
+                        onClick = {
+                            if (destination == Destination.Week) resetWeekRequested = true
+                            selected = destination
+                        },
                         icon = { Icon(painterResource(destination.icon), contentDescription = null) },
                         label = { Text(stringResource(destination.label)) }
                     )
@@ -55,7 +59,8 @@ fun BrdcrmbsApp() {
         val screenModifier = Modifier.fillMaxSize().padding(innerPadding)
         when (selected) {
             Destination.Today -> TodayScreen(screenModifier)
-            Destination.Week -> WeekRoute(screenModifier, onEditorVisible = { editorVisible = it })
+            Destination.Week -> WeekRoute(screenModifier, onEditorVisible = { editorVisible = it },
+                resetToTodayRequested = resetWeekRequested, onResetHandled = { resetWeekRequested = false })
             Destination.Progress -> ProgressScreen(screenModifier)
             Destination.Settings -> SettingsScreen(screenModifier)
         }
