@@ -9,7 +9,7 @@
 - **Package name:** com.ventures814.brdcrmbs (namespace and application ID)
 - **Platform:** Android
 - **Repository:** https://github.com/meridianworx/brdcrmbs.git (origin; primary branch main)
-- **Development stage:** Week UI, Fasting CRUD, Meal CRUD, and Saved Meal selection are physically accepted and approved/locked. Workout / Activity CRUD and Saved Activity reuse implemented; activity physical-device acceptance pending. Complete Week workflows remain unfinished.
+- **Development stage:** Week UI and all three core planning CRUD categories, Saved Meal / Activity selection, and Bakal Gym textual planning are physically accepted and approved/locked. Week planning shortcuts implemented; shortcut physical-device acceptance pending.
 
 # Purpose
 
@@ -210,11 +210,11 @@ Android foundation implemented:
 - Four-destination app shell; TodayScreen, ProgressScreen, and SettingsScreen remain placeholders. The approved My Week layout now loads repository-backed planning data.
 - Approved dark charcoal / near-black theme, bright green accent, high-contrast typography, rounded cards, and simple line icons.
 - Week persistence/read-side integration and fasting Add/Edit/Delete implemented; fasting CRUD passed physical-device Product Owner acceptance and is approved/locked.
-- Meal CRUD and Saved Meal selection/persistence passed physical-device acceptance and are approved/locked. Workout / Activity CRUD and Saved Activity selection/persistence are implemented; adherence UI, Progress calendar, and Settings behavior remain unimplemented.
+- Meal CRUD and Saved Meal selection/persistence passed physical-device acceptance and are approved/locked. Workout / Activity CRUD, Saved Activity selection, and Bakal Gym textual planning passed physical-device acceptance and are approved/locked. Copy Day, Copy to Selected Days, and Repeat Last Week are implemented; adherence UI, Progress calendar, and Settings behavior remain unimplemented.
 
 ## In Progress
 
-- Workout / Activity CRUD physical-device acceptance pending. This workflow is not approved/locked; the complete Week feature remains unfinished.
+- Planning-shortcuts physical-device acceptance pending. The shortcuts are not approved/locked; the complete Week feature is not marked finished.
 
 ## Planned
 
@@ -394,6 +394,8 @@ The following have Product Owner approval and must not be changed casually:
 - Meal CRUD and Saved Meal selection passed physical-device Product Owner acceptance and are approved/locked, as confirmed in the activity workflow request.
 - Saved Meal deletion/management belongs in Settings → Saved Meals; Saved Activity deletion/management belongs in Settings → Saved Activities. Week editors only plan/select reusable items; management is deferred.
 
+- Workout / Activity CRUD, Saved Activity selection, and Bakal Gym textual planning passed physical-device Product Owner acceptance and are approved/locked, as confirmed in the planning-shortcuts request.
+
 # Approved UI / UX
 
 Approved baseline visual direction:
@@ -441,7 +443,7 @@ Future health measurements must not automatically control the user's plan.
 
 # Current Development Focus
 
-Product Owner physical-device acceptance of Week Workout / Activity CRUD and Saved Activity reuse. Preserve locked Week, Fasting, and Meal behavior. Change Meal / Log Actual, Copy Day, Copy to Selected Days, Repeat Last Week, rescheduling, Today adherence, Progress, reminders, Backup & Restore, and Settings Saved Meals / Saved Activities management remain unimplemented. The complete Week feature is not finished.
+Product Owner physical-device acceptance of Copy Day, Copy to Selected Days, and Repeat Last Week. Preserve locked Week UI and all three core CRUD workflows. Week navigation is already functional for historical and future weeks. Rescheduling, Change Meal / Log Actual, Today adherence, Progress, reminders, Backup & Restore, and Settings reusable-item management remain outside this milestone; the complete Week feature is not marked finished.
 
 # Recent Milestones
 
@@ -560,3 +562,22 @@ Product Owner physical-device acceptance of Week Workout / Activity CRUD and Sav
 - Workout / Activity physical-device Product Owner acceptance remains pending. This workflow is not approved/locked and the complete Week feature remains unfinished. Remaining scope: rescheduling, Change Meal / Log Actual, copying/repeating, Today adherence, Progress, reminders, Backup & Restore, and Settings reusable-item management.
 - Final validation passed using the repository wrapper: :app:assembleDebug, :app:testDebugUnitTest (20 tests, 0 failures/errors), :app:lintDebug (0 errors, 11 existing warnings), :app:assembleDebugAndroidTest, and :app:connectedDebugAndroidTest with ANDROID_SERIAL=emulator-5554 (35 tests, 0 failures/errors/skipped). All activity, Fasting, Meal, persistence, migration, Week, and app-shell tests passed. Existing editor and regression assertions were retained.
 - The first connected run passed 34/35 tests; the version-3 migration fixture failed before migration because Room omits the indices array for tables without indexes. Corrected the fixture to read the optional array as empty; all schema validation and history assertions remain. The full rerun then passed. Initial emulator setup also emitted non-blocking additional-test-output storage permission notices; final validation completed successfully. The temporary proportional emulator display override is restored after testing; no data wipe or dependency upgrade was used. Existing lint notices are the redundant activity label, seven unused starter colors, and three dependency update notices. No unresolved automated build/test failures remain; physical-device Product Owner acceptance is still pending.
+
+## Week Planning Shortcuts — 2026-10-20
+
+- Product Owner confirmed physical-device acceptance and locking of Workout / Activity CRUD, Saved Activity selection and Bakal Gym textual planning. All three core Week planning categories are now functional and approved. Existing Week cards, CRUD editors, historical rules, reusable selection, and four-tab navigation remain intact.
+- Added one compact Planning actions control below the day selector: Copy Day, Copy to Selected Days, and Repeat Last Week. Copy dialogs identify the captured selected source date, allow single/multiple destination dates, disable the source as a destination, highlight selections in green, and allow destination-week navigation (including past/future weeks). Cancel/Back performs no write; busy submissions prevent duplicate taps/dismissal. Draft selections survive recreation via SavedStateHandle. Success reports added/skipped counts; an empty source adds nothing and reports Nothing to copy. Errors retain the dialog and report that nothing was copied.
+- Repeat Last Week requires explicit confirmation identifying the previous/current Monday–Sunday ranges and stating existing plans will not be deleted. It copies each corresponding weekday with a seven-calendar-date shift. Week header arrows were already functional and are preserved: previous/next week reload the repository range and seven dates, retaining the selected weekday index. There is no current-week-only restriction.
+- Product Owner explicitly chose start-day ownership for multi-day fasting: Copy Day only copies fasting events whose start date falls on the selected source day in the Week viewing zone; Repeat Last Week copies fasts whose start falls in the previous viewed week. An earlier-started fast may be visible by overlap but is not copied again. Each selected fast is translated once and remains one full continuous record, including its end beyond the source/destination day or week.
+- Copies use original planning structure even when source outcomes are Done/Missed/Changed: fresh UUIDs, PLANNED outcomes, original planned meal fields only, no actual meal information, and no activity rescheduledFromId. Source history is never rewritten. Explicit No fast plans copy as independent dated NoFastPlan records. No Saved Meal / Saved Activity records are created, changed or deleted.
+- Date/time translation: meal/activity dates shift by the calendar-day difference and retain exact optional LocalTime/nanosecond values, labels/types and notes. No time is invented. Fasting starts shift calendar dates in their original recorded zone while retaining local clock time and sub-minute precision; end = translated start + original elapsed duration. Across DST, the resulting end clock may differ to retain duration. If the original offset is valid in a repeated hour it is retained; otherwise the earlier valid offset is used. A nonexistent DST-gap start rejects the whole request rather than shifting silently. Month/year/week boundaries use LocalDate arithmetic.
+- Deterministic duplicate rule: only an existing PLANNED record with exactly matching scheduled fields suppresses insertion. Meals compare date/time/text/label/notes; activities compare date/time/name/type/notes, ignoring historical linkage; fasts compare absolute start/end, original zone, preset and notes. No fast compares date/zone/notes. IDs, actuals and outcomes are not copied into keys; historical Done/Missed/Changed destination records do not suppress a new planned item. Case/whitespace, null versus empty, and precision are preserved, not normalized. Duplicates within a request and repeated/concurrent copies are skipped; differing plans coexist. No destination record is deleted/overwritten and No fast conflicts are not automatically resolved.
+- Repository copyDay/repeatLastWeek wrap the source snapshot, candidate construction, duplicate checks and all inserts in one Room transaction. All destinations use the same pre-insert source snapshot. DST validation failures and later insert failures roll back the whole operation; Week reacts through the existing planning Flow. Domain translation lives outside Compose. Database version 4, all schemas, entities, migrations, dependencies and SDK configuration remain unchanged.
+- Remaining Week work for this milestone is physical-device Product Owner acceptance of the shortcuts. They are not approved/locked and the complete Week feature is not marked finished. No adherence, activity rescheduling, copying of historical outcomes, reusable management, reminders, backup, detailed logging or network feature was added.
+
+### Resumed shortcut validation — 2026-10-21
+
+- Found and preserved 12 uncommitted milestone files with the shortcut implementation and tests already present; no shortcut commit existed. Reviewed the complete changes and finished validation/documentation without resetting, replacing or duplicating the implementation. Existing Fasting/Meal/Activity editor implementations and regression assertions remain unchanged.
+- Final repository-wrapper validation passed: :app:assembleDebug, :app:testDebugUnitTest (28 tests, 0 failures/errors/skipped), :app:lintDebug (0 errors, 11 existing warnings), :app:assembleDebugAndroidTest, and :app:connectedDebugAndroidTest targeting emulator-5554 (45 tests, 0 failures/errors/skipped). Coverage includes original-plan copying, new identities/Planned outcomes, untouched history/libraries/destinations, exact and concurrent duplicate prevention, multiple destinations, empty sources, No fast, start-date ownership, continuous multi-day events, month/year boundaries, DST translation/rejection, transaction rollback, shortcut dialogs, week navigation, persistence/migrations and all locked CRUD regressions. No assertions were weakened or disabled.
+- The first emulator run passed 44/45 tests, including every new shortcut test; an unchanged Activity UI test temporarily found no Compose hierarchy during startup. The full warmed-emulator rerun passed unchanged. Testing used a proportional display override preserving logical layout size; original emulator size/density were restored and the task-created emulator stopped afterward. No physical-device test was performed in this milestone.
+- Remaining lint notices are one redundant activity label, seven unused starter colors and three dependency update notices. No unresolved automated build/test failure remains. Planning-shortcut physical-device Product Owner acceptance is still pending; shortcuts are not approved/locked and the complete Week feature is not marked finished.

@@ -1,0 +1,13 @@
+<resources>
+    <string name="planning_actions">Planning actions</string>
+    <string name="copy_day">Copy Day</string>
+    <string name="copy_days">Copy to Selected Days</string>
+    <string name="repeat_week">Repeat Last Week</string>
+    <string name="copy_source">Source: %1$s</string>
+    <string name="copy_selected_count">Selected destinations: %1$d</string>
+    <string name="copy_action">Copy</string>
+    <string name="copy_busy">Copying…</string>
+    <string name="copy_cancel">Cancel</string>
+    <string name="copy_rules">Original plans are added as Planned. Existing plans stay; identical Planned items are skipped. Only fasts starting on the source day (or in the previous week) are copied. Each stays one full event, with its local start time and elapsed duration. A clock-change time that does not exist cancels the copy.</string>
+    <string name="repeat_message">Add the plan from %1$s – %2$s to %3$s – %4$s on corresponding weekdays? Existing plans will not be deleted.</string>
+</resources>

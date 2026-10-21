@@ -36,6 +36,48 @@ class WeekViewModel(
     private val initialStart = DateRange.weekContaining(LocalDate.now(clock)).start.toEpochDay()
     private val weekStart = savedState.getStateFlow("weekStart", initialStart)
     private val selectedDay = savedState.getStateFlow("selectedDay", 0)
+    val shortcut = savedState.getStateFlow<ShortcutDraft?>("planningShortcut", null)
+    val copyBusy = MutableStateFlow(false)
+    val copyError = MutableStateFlow<String?>(null)
+    val copyMessage = MutableStateFlow<String?>(null)
+
+    fun openShortcut(mode: Shortcut) {
+        if (copyBusy.value) return
+        val start = LocalDate.ofEpochDay(weekStart.value)
+        savedState["planningShortcut"] = ShortcutDraft(mode, start.plusDays(selectedDay.value.toLong()), start)
+        copyError.value = null
+        copyMessage.value = null
+    }
+
+    fun changeShortcut(change: (ShortcutDraft) -> ShortcutDraft) {
+        if (!copyBusy.value) shortcut.value?.let { savedState["planningShortcut"] = change(it) }
+    }
+
+    fun closeShortcut() {
+        if (copyBusy.value) return
+        savedState["planningShortcut"] = null
+        copyError.value = null
+    }
+
+    fun copyPlans() {
+        val request = shortcut.value ?: return
+        if (copyBusy.value) return
+        if (request.mode != Shortcut.REPEAT_WEEK && request.destinations.isEmpty()) return
+        copyBusy.value = true
+        copyError.value = null
+        viewModelScope.launch {
+            try {
+                val result = if (request.mode == Shortcut.REPEAT_WEEK) repository.repeatLastWeek(request.weekStart, zone)
+                    else repository.copyDay(request.source, request.destinations, zone)
+                copyMessage.value = if (result.added == 0 && result.skipped == 0) "Nothing to copy. No plans were added."
+                    else "Added ${result.added} planned items; skipped ${result.skipped} identical Planned items."
+                savedState["planningShortcut"] = null
+            } catch (e: CancellationException) { throw e
+            } catch (e: IllegalArgumentException) { copyError.value = "Nothing was copied. ${e.message}"
+            } catch (_: Exception) { copyError.value = "Could not copy plans. Nothing was copied; please try again."
+            } finally { copyBusy.value = false }
+        }
+    }
     val editor = savedState.getStateFlow<FastingDraft?>("fastDraft", null)
     val editorLoading = MutableStateFlow(false)
     val editorBusy = MutableStateFlow(false)

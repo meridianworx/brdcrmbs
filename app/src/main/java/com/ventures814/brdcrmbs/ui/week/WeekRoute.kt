@@ -36,6 +36,10 @@ fun WeekRoute(
     onEditorVisible: (Boolean) -> Unit = {}
 ) {
     val state by model.state.collectAsStateWithLifecycle()
+    val shortcut by model.shortcut.collectAsStateWithLifecycle()
+    val copyBusy by model.copyBusy.collectAsStateWithLifecycle()
+    val copyError by model.copyError.collectAsStateWithLifecycle()
+    val copyMessage by model.copyMessage.collectAsStateWithLifecycle()
     val draft by model.editor.collectAsStateWithLifecycle()
     val loading by model.editorLoading.collectAsStateWithLifecycle()
     val busy by model.editorBusy.collectAsStateWithLifecycle()
@@ -107,6 +111,9 @@ fun WeekRoute(
         onAddMeal = model::addMeal,
         onEditMeal = model::editMeal,
         onAddActivity = model::addActivity,
-        onEditActivity = model::editActivity
+        onEditActivity = model::editActivity,
+        onPlanningAction = model::openShortcut,
+        copyMessage = copyMessage
     )
+    shortcut?.let { PlanningShortcutDialog(it, copyBusy, copyError, model::changeShortcut, model::copyPlans, model::closeShortcut) }
 }

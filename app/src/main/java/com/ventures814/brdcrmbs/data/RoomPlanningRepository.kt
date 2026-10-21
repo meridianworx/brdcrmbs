@@ -4,12 +4,66 @@ import androidx.room.withTransaction
 import com.ventures814.brdcrmbs.data.local.*
 import com.ventures814.brdcrmbs.domain.*
 import java.time.ZoneId
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 class RoomPlanningRepository(private val database: PlanningDatabase) : PlanningRepository {
     private val dao = database.planningDao()
+
+    override suspend fun copyDay(source: LocalDate, destinations: Set<LocalDate>, zone: ZoneId): CopyResult = database.withTransaction {
+        require(destinations.isNotEmpty() && source !in destinations) { "Choose a destination other than the source day." }
+        val loaded = load(DateRange.day(source), zone)
+        val snapshot = loaded.copy(fasting = loaded.fasting.filter { it.start.atZone(zone).toLocalDate() == source })
+        // Materialize all candidates before inserting. A DST error cancels the entire request.
+        val copies = destinations.sorted().map { snapshot.shiftedPlans(ChronoUnit.DAYS.between(source, it)) }
+        insertCopies(copies)
+    }
+
+    override suspend fun repeatLastWeek(weekContaining: LocalDate, zone: ZoneId): CopyResult = database.withTransaction {
+        val week = DateRange.weekContaining(weekContaining)
+        val previous = DateRange(week.start.minusWeeks(1), week.start)
+        // Own an event by its start day, rather than duplicating ongoing events from earlier weeks.
+        val loaded = load(previous, zone)
+        val snapshot = loaded.copy(fasting = loaded.fasting.filter {
+            val date = it.start.atZone(zone).toLocalDate()
+            date >= previous.start && date < previous.endExclusive
+        })
+        insertCopies(listOf(snapshot.shiftedPlans(7)))
+    }
+
+    private suspend fun insertCopies(batches: List<PlanningData>): CopyResult {
+        var added = 0
+        val fastingKeys = mutableSetOf<FastingEvent>()
+        val mealKeys = mutableSetOf<MealPlan>()
+        val activityKeys = mutableSetOf<ActivityPlan>()
+        val noFastKeys = mutableSetOf<NoFastPlan>()
+        for (batch in batches) {
+            for (event in batch.fasting) {
+                // Query its exact instant range, including events starting outside destination dates.
+                fastingKeys.addAll(dao.fasting(event.start.toEpochMilli(), event.end.toEpochMilli())
+                    .map { it.model() }.filter { it.outcome == FastingOutcome.PLANNED }.map { it.copyKey() })
+                if (fastingKeys.add(event.copyKey())) { dao.insert(event.entity()); added++ }
+            }
+            for (meal in batch.meals) {
+                mealKeys.addAll(dao.meals(meal.date.toEpochDay(), meal.date.plusDays(1).toEpochDay())
+                    .map { it.model() }.filter { it.outcome == MealOutcome.PLANNED }.map { it.copyKey() })
+                if (mealKeys.add(meal.copyKey())) { dao.insert(meal.entity()); added++ }
+            }
+            for (activity in batch.activities) {
+                activityKeys.addAll(dao.activities(activity.date.toEpochDay(), activity.date.plusDays(1).toEpochDay())
+                    .map { it.model() }.filter { it.outcome == ActivityOutcome.PLANNED }.map { it.copyKey() })
+                if (activityKeys.add(activity.copyKey())) { dao.insert(activity.entity()); added++ }
+            }
+            for (plan in batch.noFast) {
+                noFastKeys.addAll(dao.noFast(plan.date.toEpochDay(), plan.date.plusDays(1).toEpochDay()).map { it.model().copyKey() })
+                if (noFastKeys.add(plan.copyKey())) { dao.insert(plan.entity()); added++ }
+            }
+        }
+        return CopyResult(added, batches.sumOf { it.recordCount } - added)
+    }
 
     override fun observe(range: DateRange, zone: ZoneId): Flow<PlanningData> =
         database.invalidationTracker.createFlow("fasting_events", "meal_plans", "activity_plans", "no_fast_plans")

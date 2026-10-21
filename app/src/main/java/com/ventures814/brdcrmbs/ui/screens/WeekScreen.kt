@@ -44,6 +44,8 @@ import com.ventures814.brdcrmbs.ui.theme.BrdcrmbsTheme
 import com.ventures814.brdcrmbs.ui.week.WeekUiState
 import com.ventures814.brdcrmbs.ui.week.WeekRow
 import com.ventures814.brdcrmbs.ui.week.presentWeek
+import com.ventures814.brdcrmbs.ui.week.PlanningActions
+import com.ventures814.brdcrmbs.ui.week.Shortcut
 import com.ventures814.brdcrmbs.domain.DateRange
 import com.ventures814.brdcrmbs.domain.PlanningData
 import java.time.LocalDate
@@ -61,7 +63,9 @@ fun WeekScreen(
     onAddMeal: () -> Unit = {},
     onEditMeal: (String) -> Unit = {},
     onAddActivity: () -> Unit = {},
-    onEditActivity: (String) -> Unit = {}
+    onEditActivity: (String) -> Unit = {},
+    onPlanningAction: (Shortcut) -> Unit = {},
+    copyMessage: String? = null
 ) {
     Column(
         modifier = modifier.verticalScroll(rememberScrollState()).padding(16.dp),
@@ -86,6 +90,8 @@ fun WeekScreen(
         }
         WeekSelector(state.weekLabel, onPreviousWeek, onNextWeek)
         WeekDaySelector(state, onDaySelected)
+        PlanningActions(!state.loading && !state.failed, onPlanningAction)
+        copyMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
         if (state.loading || state.failed) {
             Text(
                 stringResource(if (state.failed) R.string.week_load_failed else R.string.week_loading),
