@@ -83,4 +83,30 @@ class WeekContextStateTest {
         assertNull(recreated.copyMessage.value)
         assertEquals(1, repository.load(DateRange.day(testDate.plusDays(1)), testZone).meals.size)
     }
+
+    @Test fun arrowsFromEveryWeekdayChooseMondayAcrossYearBoundaryWithoutWrites() = runBlocking {
+        val saved = SavedStateHandle()
+        val clock = Clock.fixed(Instant.parse("2027-01-01T20:00:00Z"), testZone)
+        val model = WeekViewModel(repository, saved, clock); store.put("arrows", model)
+        val range = DateRange(LocalDate.of(2026, 12, 1), LocalDate.of(2027, 2, 1))
+        repository.addMeal(MealPlan(date = LocalDate.of(2026, 12, 30), text = "History"))
+        repository.addMeal(MealPlan(date = LocalDate.of(2027, 1, 6), text = "Future"))
+        val original = repository.load(range, testZone)
+        for (day in 0..6) for (offset in listOf(-1L, 1L)) {
+            main {
+                model.resetToToday()
+                model.selectDay(day)
+                model.copyMessage.value = "Previous result"
+                model.moveWeek(offset)
+            }
+            assertEquals(LocalDate.of(2026, 12, 28).plusWeeks(offset).toEpochDay(), saved.get<Long>("weekStart"))
+            assertEquals(0, saved.get<Int>("selectedDay"))
+            assertNull(model.copyMessage.value)
+            main { model.moveWeek(-offset) }
+            assertEquals(LocalDate.of(2026, 12, 28).toEpochDay(), saved.get<Long>("weekStart"))
+            assertEquals(0, saved.get<Int>("selectedDay"))
+        }
+        main { model.resetToToday() }; assertEquals(4, saved.get<Int>("selectedDay"))
+        assertEquals(original, repository.load(range, testZone))
+    }
 }

@@ -76,6 +76,10 @@ Bottom navigation contains exactly four primary destinations:
 3. **Progress**
 4. **Settings**
 
+Finalized Week selection rules:
+- Enter, re-enter or reselect the Week bottom-navigation tab: current local calendar week with today selected.
+- Previous/next week arrows: destination calendar week with Monday selected, even when returning to the actual current week. Arrow navigation also clears transient Planning Action feedback.
+
 # Architecture
 
 ## Data Storage
@@ -607,3 +611,13 @@ Physical-device retesting also covers the Planning Actions discoverability corre
 - Wrapper validation passed: :app:assembleDebug, :app:testDebugUnitTest (28 tests, 0 failures/errors/skipped), :app:assembleDebugAndroidTest and :app:lintDebug (0 errors, 11 existing warnings). The five new WeekContextUiTest/WeekContextStateTest tests passed in a focused run and again in the complete regression run. The full emulator suite completed 52 tests: 51 passed and the unchanged shortcut Back-dismissal test was blocked by a System UI ANR overlay, confirmed by screenshot. After closing the emulator's unresponsive System UI dialog and confirming app-window focus, the unchanged PlanningShortcutsUiTest group passed 5/5 with 0 failures/errors/skipped. All 52 distinct emulator tests therefore passed across the full run and targeted rerun; no assertion was disabled or weakened and no existing test was edited.
 - Remaining notices are the same redundant activity label, seven unused starter colors and three dependency update warnings. The emulator System UI instability was an environment issue; no unresolved app build/test failure remains. The temporary proportional emulator display override was restored and the task-created emulator stopped after validation. No physical-device acceptance was performed by Codex.
 - Physical-device acceptance remains pending final Product Owner retest; neither Planning Actions nor the complete Week feature is marked fully approved.
+
+## Select Monday When Navigating Weeks — 2026-10-21
+
+- Physical-device acceptance confirmed current-week/today tab entry is correct and approved, but found that arrow navigation carried the selected weekday into the destination week. Final rule: every previous/next arrow navigation selects Monday of the destination week. This supersedes the earlier weekday-retention behavior documented in historical milestones.
+- Added only the selected-day reset to WeekViewModel.moveWeek; its existing feedback clearing and week-date calculation remain. Tab entry/re-entry and active Week-tab reselection still use the separate resetToToday behavior and select today's actual local date. Returning to the current week by arrows selects Monday; returning by the bottom tab selects today.
+- No persisted plan is moved, deleted or recreated by navigation. Planning Actions UI/business logic, CRUD, reusable records, historical integrity, database version 4, schemas, migrations and dependencies remain unchanged.
+- Updated prior navigation-test expectations to the newly approved Monday rule without removing assertions. Added repeated forward/backward UI navigation and every-source-weekday state coverage, including year boundaries, feedback clearing, tab-versus-arrow behavior and exact persisted-plan preservation.
+- Validation passed: :app:assembleDebug, :app:testDebugUnitTest (28 tests, 0 failures/errors/skipped), :app:assembleDebugAndroidTest and :app:lintDebug (0 errors, 11 existing warnings). The full emulator run completed 54 tests: 53 passed, including all seven Week context/state tests and shortcut, Fasting, Meal, persistence/migration and screen regressions. One unchanged Activity UI launch test temporarily lacked Compose content during recovery from a confirmed emulator System UI ANR. The complete unchanged ActivityUiTest rerun passed 3/3, 0 failures/errors/skipped, on the warmed emulator. All 54 distinct emulator tests passed across those runs; no existing CRUD test or assertion was changed to obtain a pass.
+- Existing warnings remain one redundant activity label, seven unused starter colors and three dependency update notices. No unresolved app build/test failure remains. Emulator System UI instability was handled as an environment issue, and the temporary display override was restored and task-created emulator stopped after validation.
+- Week physical-device acceptance remains pending one final Product Owner retest; the complete Week/Planning Actions feature is not marked approved.

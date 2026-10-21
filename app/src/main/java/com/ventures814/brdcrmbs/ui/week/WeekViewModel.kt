@@ -367,5 +367,6 @@ class WeekViewModel(
     fun moveWeek(offset: Long) {
         clearCopyFeedback()
         savedState["weekStart"] = LocalDate.ofEpochDay(weekStart.value).plusWeeks(offset).toEpochDay()
+        savedState["selectedDay"] = 0
     }
 }

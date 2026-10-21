@@ -68,13 +68,13 @@ class WeekContextUiTest {
         enter()
         for ((offset, destination) in listOf(1L to "Progress", -1L to "Settings", 0L to "Today")) {
             if (offset != 0L) compose.onNodeWithContentDescription(if (offset > 0) "Next week" else "Previous week").performScrollTo().performClick()
-            awaitDay(monday.plusWeeks(offset), 2)
+            awaitDay(monday.plusWeeks(offset), if (offset == 0L) 2 else 0)
             compose.onNodeWithContentDescription(model.state.value.days[0].description).performClick()
             awaitDay(monday.plusWeeks(offset), 0)
             tab(destination); enter()
         }
         compose.onNodeWithContentDescription("Next week").performScrollTo().performClick()
-        awaitDay(monday.plusWeeks(1), 2)
+        awaitDay(monday.plusWeeks(1), 0)
         tab("Week"); awaitDay(monday, 2)
         assertNull(model.copyMessage.value)
         assertEquals(original, runBlocking { repository.load(range, testZone) })
@@ -93,13 +93,13 @@ class WeekContextUiTest {
         assertTrue(skipped.contains("skipped 1")); assertNotEquals(added, skipped)
         compose.onNodeWithText(added).assertDoesNotExist()
         compose.onNodeWithContentDescription("Next week").performScrollTo().performClick()
-        awaitDay(monday.plusWeeks(1), 2)
+        awaitDay(monday.plusWeeks(1), 0)
         assertNull(model.copyMessage.value); compose.onNodeWithText(skipped).assertDoesNotExist()
         compose.runOnIdle { model.openShortcut(com.ventures814.brdcrmbs.ui.week.Shortcut.REPEAT_WEEK); model.copyPlans() }
         compose.waitUntil(10_000) { !model.copyBusy.value && model.shortcut.value == null }
         assertNotNull(model.copyMessage.value)
         compose.onNodeWithContentDescription("Previous week").performScrollTo().performClick()
-        awaitDay(monday, 2); assertNull(model.copyMessage.value)
+        awaitDay(monday, 0); assertNull(model.copyMessage.value)
     }
 
     @Test fun leavingEveryTabAndRecreationClearFeedbackWithoutResettingActiveBrowsing() {
@@ -115,8 +115,28 @@ class WeekContextUiTest {
         restoration.emulateSavedInstanceStateRestore()
         awaitDay(monday, 2); assertNull(model.copyMessage.value)
         compose.onNodeWithContentDescription("Next week").performScrollTo().performClick()
-        awaitDay(monday.plusWeeks(1), 2)
+        awaitDay(monday.plusWeeks(1), 0)
         restoration.emulateSavedInstanceStateRestore()
-        awaitDay(monday.plusWeeks(1), 2)
+        awaitDay(monday.plusWeeks(1), 0)
+    }
+
+    @Test fun arrowsSelectMondayAcrossRepeatedWeeksButTabStillSelectsToday() {
+        val range = DateRange(monday.minusWeeks(2), monday.plusWeeks(3))
+        val original = runBlocking { repository.load(range, testZone) }
+        enter() // Current Wednesday.
+        var week = monday
+        for (offset in listOf(1L, 1L, -1L, -1L, -1L, 1L)) {
+            compose.onNodeWithContentDescription(if (offset > 0) "Next week" else "Previous week").performScrollTo().performClick()
+            week = week.plusWeeks(offset)
+            awaitDay(week, 0)
+            // A different selection must not carry into the next destination week.
+            compose.onNodeWithContentDescription(model.state.value.days[6].description).performClick()
+            awaitDay(week, 6)
+        }
+        tab("Week"); awaitDay(monday, 2)
+        compose.onNodeWithContentDescription("Previous week").performScrollTo().performClick()
+        awaitDay(monday.minusWeeks(1), 0)
+        tab("Progress"); enter()
+        assertEquals(original, runBlocking { repository.load(range, testZone) })
     }
 }
