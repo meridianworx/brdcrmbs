@@ -110,4 +110,17 @@ class ProgressReviewTest {
             assertEquals(AdherenceSummary(1, 1), review.fasting); assertEquals(listOf(event), original.fasting)
         }
     }
+    @Test fun dailyAdherenceUsesResolvedItemsAcrossCategoriesAndKeepsChangedDistinct() {
+        val plans = PlanningData(fasting = listOf(fast(FastingOutcome.DONE)),
+            meals = listOf(meal(MealOutcome.DONE)), activities = listOf(activity(ActivityOutcome.MISSED)))
+        assertEquals(AdherenceSummary(2, 3), plans.day().adherence)
+        assertEquals(67, plans.day().adherence.percent)
+        val changed = plans.copy(meals = plans.meals + meal(MealOutcome.CHANGED) + meal(MealOutcome.PLANNED),
+            noFast = listOf(NoFastPlan(date = date, zone = zone)))
+        assertEquals(AdherenceSummary(2, 4), changed.day().adherence)
+        assertEquals(50, changed.day().adherence.percent)
+        assertNull(PlanningData(meals = listOf(meal(MealOutcome.PLANNED)), noFast = changed.noFast).day().adherence.percent)
+        assertEquals(0, PlanningData(meals = listOf(meal(MealOutcome.MISSED))).day().adherence.percent)
+        assertEquals(AdherenceSummary(1, 1), PlanningData(fasting = listOf(fast(FastingOutcome.DONE, 72))).day().adherence)
+    }
 }

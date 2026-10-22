@@ -29,6 +29,12 @@ data class MonthReview(
     val leadingCells: Int get() = month.atDay(1).dayOfWeek.value - 1
 }
 
+/** Selected-day resolved-item score; existing monthly aggregation remains unchanged. */
+val ReviewDay.adherence: AdherenceSummary get() = AdherenceSummary(
+    plans.fasting.count { it.outcome == FastingOutcome.DONE } + plans.meals.count { it.outcome == MealOutcome.DONE } + plans.activities.count { it.outcome == ActivityOutcome.DONE },
+    plans.fasting.count { it.outcome != FastingOutcome.PLANNED } + plans.meals.count { it.outcome != MealOutcome.PLANNED } + plans.activities.count { it.outcome != ActivityOutcome.PLANNED }
+)
+
 private fun aggregate(outcomes: List<String>): ReviewStatus = when {
     outcomes.isEmpty() -> ReviewStatus.NONE
     "MISSED" in outcomes -> ReviewStatus.MISSED

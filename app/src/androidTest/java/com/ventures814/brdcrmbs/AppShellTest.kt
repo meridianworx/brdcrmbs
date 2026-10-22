@@ -25,7 +25,7 @@ class AppShellTest {
         compose.onNode(isSelectable() and hasText("Today")).assertIsSelected()
         val screens = listOf(
             "Week" to "My Week",
-            "Progress" to "Progress",
+            "Progress" to "PROGRESS",
             "Settings" to "Your app settings will appear here.",
             "Today" to "Today"
         )

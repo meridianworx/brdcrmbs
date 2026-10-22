@@ -4,6 +4,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.room.Room
@@ -70,31 +71,79 @@ class ProgressUiTest {
         compose.onNodeWithTag("summary-Fasting").assertTextEquals("100%")
         compose.onNodeWithTag("summary-Meals").assertTextEquals("50%")
         compose.onNodeWithTag("summary-Activity").assertTextEquals("0%")
+        for (label in listOf("Fasting", "Meals", "Activity")) compose.onNodeWithTag("summaryCard-$label").assertExists()
+        compose.onNodeWithTag("ring-Fasting").assertRangeInfoEquals(ProgressBarRangeInfo(1f, 0f..1f))
+        compose.onNodeWithTag("ring-Meals").assertRangeInfoEquals(ProgressBarRangeInfo(.5f, 0f..1f))
+        compose.onNodeWithTag("dailyAdherence").performScrollTo().assertTextEquals("50%")
+        compose.onAllNodesWithTag("dayDetailCard").assertCountEquals(1)
+        for (letter in listOf("F", "M", "A")) compose.onAllNodesWithText(letter).assertCountEquals(0)
+        compose.onNodeWithTag("indicator-F-$date", useUnmergedTree = true).assertContentDescriptionEquals("F Success")
+        compose.onNodeWithTag("indicator-M-$date", useUnmergedTree = true).assertContentDescriptionEquals("M Changed")
+        compose.onNodeWithTag("indicator-A-$date", useUnmergedTree = true).assertContentDescriptionEquals("A Missed")
         for (category in listOf("F", "M", "A")) compose.onNodeWithTag("indicator-$category-$date", useUnmergedTree = true).assertExists()
         compose.onNodeWithTag("progressDate-$date").performScrollTo().assertIsSelected()
         compose.onNodeWithTag("fastSpan-$date", useUnmergedTree = true).assertExists()
         for (status in listOf("SUCCESS", "CHANGED", "MISSED", "PLANNED")) compose.onNodeWithTag("legend-$status").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("reviewDetails").performScrollTo().performClick()
         compose.onNodeWithTag("detail-fast-span").performScrollTo().assertTextEquals("72h")
         compose.onNodeWithTag("detail-planned-changed").performScrollTo().assertTextEquals("Planned: Original salmon").assert(hasSetTextAction().not())
         compose.onNodeWithTag("detail-actual-changed").performScrollTo().assertTextEquals("Actual: Actual soup")
         compose.onNodeWithText("Late lunch · 1:00 PM · Actual note").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Meals · 1/2 Done").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Meals · 1 / 2 followed").performScrollTo().assertIsDisplayed()
         compose.onNodeWithTag("detail-activity-walk").performScrollTo().assertTextEquals("Walk")
         compose.onAllNodesWithText("Save").assertCountEquals(0)
         assertEquals(before, runBlocking { repo.load(DateRange.day(date), testZone) })
     }
     @Test fun monthNavigationDateSelectionAndNeutralDetails() {
         show()
+        assertTrue(compose.onNodeWithText("Sun").getUnclippedBoundsInRoot().left < compose.onNodeWithText("Mon").getUnclippedBoundsInRoot().left)
         compose.onNodeWithTag("progressMonth").assertTextEquals("October 2026")
         compose.onNodeWithContentDescription("Next month").performScrollTo().performClick(); await(LocalDate.of(2026, 11, 1))
         compose.onNodeWithTag("progressMonth").assertTextEquals("November 2026")
         val selected = LocalDate.of(2026, 11, 30)
         compose.onNodeWithTag("progressDate-$selected").performScrollTo().assertIsDisplayed().assertWidthIsAtLeast(40.dp).performClick(); await(selected)
         compose.onNodeWithTag("progressDate-$selected").assertIsSelected()
-        compose.onNodeWithTag("detailDate").performScrollTo().assertTextEquals("Monday, November 30, 2026")
+        compose.onNodeWithTag("detailDate").performScrollTo().assertTextEquals("Monday, Nov 30")
         compose.onAllNodesWithText("Nothing planned").assertCountEquals(3)
+        compose.onNodeWithTag("dailyAdherence").assertTextEquals("—")
+        compose.onNodeWithTag("progressDate-$selected").assertHeightIsEqualTo(48.dp)
+        compose.onNodeWithTag("indicator-M-$selected", useUnmergedTree = true).assertContentDescriptionEquals("M Nothing planned")
         compose.onNodeWithContentDescription("Previous month").performScrollTo().performClick(); await(LocalDate.of(2026, 10, 1))
         compose.onNodeWithTag("summary-Meals").assertTextEquals("—")
+        compose.onNodeWithTag("ring-Meals").assertRangeInfoEquals(ProgressBarRangeInfo(0f, 0f..1f))
+    }
+    @Test fun compactPlannedIndicatorsAndIntentionalNoFastRemainNeutral() {
+        runBlocking {
+            repo.addMeal(MealPlan(date = date, text = "Planned lunch"))
+            repo.addFastingPlan(NoFastPlan(date = date, zone = testZone))
+        }
+        show()
+        compose.onNodeWithTag("indicator-M-$date", useUnmergedTree = true).assertContentDescriptionEquals("M Planned")
+        compose.onNodeWithTag("indicator-F-$date", useUnmergedTree = true).assertContentDescriptionEquals("F Nothing planned")
+        compose.onNodeWithText("No fast · Intentional plan").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("dailyAdherence").assertTextEquals("—")
+        compose.onAllNodesWithText("— — —").assertCountEquals(0)
+        for (letter in listOf("F", "M", "A")) compose.onAllNodesWithText(letter).assertCountEquals(0)
+    }
+    @Test fun populatedReferenceStructureKeepsCompactRowsVisibleAndCapturesVisualReview() {
+        val start = date.atTime(19, 0).atZone(testZone).toInstant()
+        runBlocking {
+            repo.addFasting(FastingEvent(start = start, end = start.plus(Duration.ofHours(16)), zone = testZone, preset = "16:8", outcome = FastingOutcome.DONE))
+            repo.addMeal(MealPlan(date = date, text = "Eggs", outcome = MealOutcome.DONE))
+            repo.addMeal(MealPlan(date = date, text = "Chicken", outcome = MealOutcome.DONE))
+            repo.addMeal(MealPlan(date = date, text = "Salmon", outcome = MealOutcome.CHANGED, actual = ActualMeal("Soup")))
+            repo.addActivity(ActivityPlan(date = date, name = "Bakal Gym — Upper Body", type = ActivityType.WORKOUT, outcome = ActivityOutcome.MISSED))
+        }
+        show(app = true); tab("Progress"); await(date)
+        compose.onNodeWithTag("summary-Fasting").assertTextEquals("100%")
+        compose.onNodeWithTag("summary-Meals").assertTextEquals("67%")
+        compose.onNodeWithTag("dailyAdherence").assertTextEquals("60%")
+        InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand("screencap -p /data/local/tmp/progress-screen3-populated.png").use {
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(it).use { stream -> stream.readBytes() }
+        }
+        compose.onNodeWithTag("dayDetailCard").assertIsDisplayed()
+        compose.onNodeWithTag("reviewDetails").assertIsDisplayed()
+        compose.onNodeWithText("Bakal Gym — Upper Body").assertIsDisplayed()
     }
     @Test fun progressTabEntryReentryAndReselectionResetToCurrentMonthToday() {
         show(app = true); tab("Progress"); await(date)
