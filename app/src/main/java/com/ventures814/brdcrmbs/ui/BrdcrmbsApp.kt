@@ -22,7 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.ventures814.brdcrmbs.R
 import com.ventures814.brdcrmbs.ui.screens.ProgressScreen
 import com.ventures814.brdcrmbs.ui.screens.SettingsScreen
-import com.ventures814.brdcrmbs.ui.screens.TodayScreen
+import com.ventures814.brdcrmbs.ui.today.TodayRoute
 import com.ventures814.brdcrmbs.ui.week.WeekRoute
 import com.ventures814.brdcrmbs.ui.theme.BrdcrmbsTheme
 
@@ -58,7 +58,7 @@ fun BrdcrmbsApp() {
     ) { innerPadding ->
         val screenModifier = Modifier.fillMaxSize().padding(innerPadding)
         when (selected) {
-            Destination.Today -> TodayScreen(screenModifier)
+            Destination.Today -> TodayRoute(screenModifier, onEditorVisible = { editorVisible = it })
             Destination.Week -> WeekRoute(screenModifier, onEditorVisible = { editorVisible = it },
                 resetToTodayRequested = resetWeekRequested, onResetHandled = { resetWeekRequested = false })
             Destination.Progress -> ProgressScreen(screenModifier)

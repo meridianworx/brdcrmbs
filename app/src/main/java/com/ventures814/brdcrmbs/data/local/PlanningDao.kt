@@ -7,6 +7,13 @@ import androidx.room.Update
 
 @Dao
 interface PlanningDao {
+    @Query("UPDATE fasting_events SET outcome = :outcome WHERE id = :id")
+    suspend fun recordFastingOutcome(id: String, outcome: String): Int
+    // Retain the last actual snapshot when correcting Changed to Done/Missed.
+    @Query("UPDATE meal_plans SET outcome = :outcome WHERE id = :id")
+    suspend fun recordMealOutcome(id: String, outcome: String): Int
+    @Query("UPDATE activity_plans SET outcome = :outcome WHERE id = :id")
+    suspend fun recordActivityOutcome(id: String, outcome: String): Int
     @Insert suspend fun insert(activity: SavedActivityEntity)
     @Query("SELECT * FROM saved_activities ORDER BY name COLLATE NOCASE, id")
     suspend fun savedActivities(): List<SavedActivityEntity>

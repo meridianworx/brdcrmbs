@@ -9,7 +9,7 @@
 - **Package name:** com.ventures814.brdcrmbs (namespace and application ID)
 - **Platform:** Android
 - **Repository:** https://github.com/meridianworx/brdcrmbs.git (origin; primary branch main)
-- **Development stage:** Week UI and all three core planning CRUD categories, Saved Meal / Activity selection, and Bakal Gym textual planning are physically accepted and approved/locked. Week planning shortcuts implemented; shortcut physical-device acceptance pending.
+- **Development stage:** Complete Week planning workflow, including shortcuts and finalized navigation/feedback behavior, passed physical-device Product Owner acceptance and is approved/locked. Today adherence and Change Meal / Log Actual implemented; Today physical-device acceptance pending.
 
 # Purpose
 
@@ -211,14 +211,14 @@ Product/planning work completed:
 - 12-screen UI/UX baseline approved
 
 Android foundation implemented:
-- Four-destination app shell; TodayScreen, ProgressScreen, and SettingsScreen remain placeholders. The approved My Week layout now loads repository-backed planning data.
+- Four-destination app shell; Week and Today use the same repository-backed plans. ProgressScreen and SettingsScreen remain placeholders.
 - Approved dark charcoal / near-black theme, bright green accent, high-contrast typography, rounded cards, and simple line icons.
 - Week persistence/read-side integration and fasting Add/Edit/Delete implemented; fasting CRUD passed physical-device Product Owner acceptance and is approved/locked.
-- Meal CRUD and Saved Meal selection/persistence passed physical-device acceptance and are approved/locked. Workout / Activity CRUD, Saved Activity selection, and Bakal Gym textual planning passed physical-device acceptance and are approved/locked. Copy Day, Copy to Selected Days, and Repeat Last Week are implemented; adherence UI, Progress calendar, and Settings behavior remain unimplemented.
+- Meal CRUD and Saved Meal selection/persistence passed physical-device acceptance and are approved/locked. Workout / Activity CRUD, Saved Activity selection, and Bakal Gym textual planning passed physical-device acceptance and are approved/locked. Copy Day, Copy to Selected Days, Repeat Last Week, Planning Actions discoverability and finalized Week navigation/feedback passed acceptance and are approved/locked. Today adherence and Change Meal / Log Actual are implemented; Progress calendar and Settings behavior remain unimplemented.
 
 ## In Progress
 
-- Planning-shortcuts physical-device acceptance pending. The shortcuts are not approved/locked; the complete Week feature is not marked finished.
+- Today adherence and Change Meal / Log Actual physical-device acceptance pending. Today is not approved/locked.
 
 ## Planned
 
@@ -375,6 +375,8 @@ Do not add measurement/unit settings unless an implemented feature actually need
 
 # Locked Decisions
 
+- Complete Week planning workflow passed physical-device Product Owner acceptance, as confirmed in the Today request: CRUD, reusable selection, shortcuts, Planning Actions UI, feedback lifecycle and finalized tab/arrow navigation are approved/locked. Earlier pending-acceptance milestone notes are historical.
+
 The following have Product Owner approval and must not be changed casually:
 
 - App name: **brdcrmbs**
@@ -432,7 +434,7 @@ The approved visual mockups establish the baseline design language. Implementati
 
 # Known Issues
 
-- Physical-device testing found Planning actions looked like a passive label, preventing discovery of the shortcuts. An explicit button/action-sheet correction is implemented; Product Owner physical-device retest remains pending.
+- Week discoverability and navigation corrections passed physical-device acceptance. Today physical-device acceptance remains pending.
 - Exact backup storage/destination implementation is not yet selected.
 
 # Backlog
@@ -447,9 +449,7 @@ Future health measurements must not automatically control the user's plan.
 
 # Current Development Focus
 
-Product Owner physical-device acceptance of Copy Day, Copy to Selected Days, and Repeat Last Week. Preserve locked Week UI and all three core CRUD workflows. Week navigation is already functional for historical and future weeks. Rescheduling, Change Meal / Log Actual, Today adherence, Progress, reminders, Backup & Restore, and Settings reusable-item management remain outside this milestone; the complete Week feature is not marked finished.
-
-Physical-device retesting also covers the Planning Actions discoverability correction and Week navigation/feedback lifecycle corrections below. Week and Planning Actions are not marked fully approved.
+Product Owner physical-device acceptance of Today adherence and Change Meal / Log Actual. Preserve the complete locked Week planning workflow and its tab-entry/today versus arrow/Monday navigation rules. Progress, Day Detail, rescheduling, reminders, Backup & Restore and Settings reusable-item management remain outside this milestone. Today is not marked approved/locked.
 
 # Recent Milestones
 
@@ -621,3 +621,25 @@ Physical-device retesting also covers the Planning Actions discoverability corre
 - Validation passed: :app:assembleDebug, :app:testDebugUnitTest (28 tests, 0 failures/errors/skipped), :app:assembleDebugAndroidTest and :app:lintDebug (0 errors, 11 existing warnings). The full emulator run completed 54 tests: 53 passed, including all seven Week context/state tests and shortcut, Fasting, Meal, persistence/migration and screen regressions. One unchanged Activity UI launch test temporarily lacked Compose content during recovery from a confirmed emulator System UI ANR. The complete unchanged ActivityUiTest rerun passed 3/3, 0 failures/errors/skipped, on the warmed emulator. All 54 distinct emulator tests passed across those runs; no existing CRUD test or assertion was changed to obtain a pass.
 - Existing warnings remain one redundant activity label, seven unused starter colors and three dependency update notices. No unresolved app build/test failure remains. Emulator System UI instability was handled as an environment issue, and the temporary display override was restored and task-created emulator stopped after validation.
 - Week physical-device acceptance remains pending one final Product Owner retest; the complete Week/Planning Actions feature is not marked approved.
+
+## Today Adherence / Change Meal — 2026-10-21
+
+- Product Owner confirmed complete Week planning physical-device acceptance and approval/locking, including CRUD, saved-item selection, shortcuts, discoverability, feedback lifecycle and final tab/today versus arrow/Monday navigation. Earlier pending Week statements above are historical; Week implementation remains unchanged.
+- Replaced the Today placeholder with current local date, Fasting, Meals and Workout / Activity charcoal cards, neutral Nothing planned states, text-only meal details and compact outcome controls. Status treatment combines symbols/text and color: Planned, Done, Changed and Missed. There are no planning editors, date browsing, automatic outcomes or generated plans in Today.
+- TodayViewModel/TodayRoute observe the same repository/Room records as Week. Local-date/zone queries use the established half-open DateRange.day; cross-midnight and multi-day fasts appear once per applicable Today view and remain one continuous stored event. Explicit No fast is neutral, with no adherence failure or fabricated outcome.
+- Today refreshes on entry/re-entry and resume, and receives system date/time/time-zone changes while active so an open screen updates across local midnight. Restored actual drafts belong only to their original current day. Repository Today operations revalidate date/zone and record membership within the transaction; stale editors or unrelated-date records cannot rewrite historical/future outcomes through Today.
+- Fasting and Workout / Activity support Done/Missed and current-context corrections while retaining IDs, schedules, notes, type and historical linkage. A fast has one event-level outcome, including when spanning multiple days. No rescheduling or duplicate records are created.
+- Meals support Done/Missed/Changed. Change Meal / Log Actual shows original planned text/label/time/notes read-only and edits only actual text (required), optional label, optional removable time and optional notes. Save stores actual details separately, marks Changed and returns reactively to Today. Changed can be reopened to correct actual details. Back/picker cancellation does not write; drafts survive recreation, save failures retain entries and busy state blocks duplicate submits/dismissal.
+- Correcting Changed to Done/Missed changes the outcome only and retains the last actual snapshot in separate actual columns. Today displays actual details only for Changed, so retained actual data never masquerades as planned content or as the current Done/Missed result. Reopening Changed can reuse/correct the retained snapshot. This is correction of the current record, not a new audit-log/history table; planned data is never overwritten.
+- Added AdherenceDay and guarded repository outcome operations. SQL updates target outcome/actual columns only; saved libraries and activity rescheduledFromId remain untouched. Existing foundation recordChangedMeal remains compatible. Database stays version 4; entities, exported schemas, migrations, dependencies and SDK configuration are unchanged.
+- Added JVM actual-draft validation/serialization/precision tests, durable outcome/history/library and current-date repository tests, reactive ViewModel restoration/date/error tests, and Today UI coverage for statuses, Change Meal, actual corrections, neutral empty/No fast states and tab re-entry at midnight. App-shell placeholder assertion now checks the functional Today heading; locked Week/CRUD/shortcut tests retain their assertions.
+- Today physical-device Product Owner acceptance remains pending; Today is not approved/locked. Progress, Day Detail, rescheduling, reminders, Backup & Restore, reusable Settings management, detailed logging, health measurements, nutrition, photography, recommendations and cloud functionality remain outside this milestone.
+
+### Resumed Today validation — 2026-10-22
+
+- Found and reviewed 18 existing uncommitted Today milestone files, with no Today commit created. Preserved the implementation and tests rather than resetting, replacing or duplicating them; completed final diff review, validation and documentation. The final actual-correction UI assertion explicitly waits for the reactive corrected actual text before checking it.
+- Test integration remains test-only: AppShellTest checks the functional Today heading instead of its removed placeholder. WeekContextUiTest preloads TodayViewModel alongside WeekViewModel in its custom ViewModel store with the same test repository/clock. Existing navigation, feedback and CRUD assertions remain intact; production Week navigation semantics were not changed.
+- Repository-wrapper validation passed: :app:assembleDebug, :app:testDebugUnitTest (31 tests, 0 failures/errors/skipped), :app:assembleDebugAndroidTest and :app:lintDebug (0 errors, 11 existing warnings). The focused Today emulator group passed 10/10. The final complete :app:connectedDebugAndroidTest run on emulator-5554 passed all 64 tests in one run, with 0 failures/errors/skipped: Today data/ViewModel/UI, all locked Week CRUD and reusable-item workflows, shortcuts, navigation/feedback, persistence and migrations.
+- Confirmed the earlier startup ANR belonged to emulator com.android.systemui; clearing its dialog restored input before the passing Today-specific run. No production workaround or weakened assertion was introduced. The final full regression run passed without an affected-test rerun. Temporary proportional display settings were restored to 1440x3120 / density 560 and the task-created emulator was stopped after validation.
+- Remaining lint notices are one redundant activity label, seven unused starter colors and three dependency update notices. Removed only the obsolete Today placeholder string. No unresolved automated build/test failure remains. Room remains version 4 with unchanged entities, schemas and migrations; dependencies, SDK setup and locked Week production files are unchanged.
+- Current focus remains Product Owner physical-device acceptance of Today adherence and Change Meal / Log Actual. Automated validation is complete; Today is not approved/locked.

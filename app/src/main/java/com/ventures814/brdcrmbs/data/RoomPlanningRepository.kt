@@ -10,8 +10,44 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
-class RoomPlanningRepository(private val database: PlanningDatabase) : PlanningRepository {
+class RoomPlanningRepository(private val database: PlanningDatabase, private val adherenceClock: java.time.Clock? = null) : PlanningRepository {
     private val dao = database.planningDao()
+
+    private fun requireToday(day: AdherenceDay) {
+        val clock = adherenceClock ?: java.time.Clock.systemDefaultZone()
+        require(day.zone == clock.zone && day.date == LocalDate.now(clock)) { "The local day has changed. Return to Today and try again." }
+    }
+
+    override suspend fun recordTodayFasting(id: String, outcome: FastingOutcome, day: AdherenceDay) = database.withTransaction {
+        requireToday(day)
+        require(outcome != FastingOutcome.PLANNED)
+        val plan = checkNotNull(dao.fastingById(id)) { "Fasting plan no longer exists" }.model()
+        val range = DateRange.day(day.date)
+        require(plan.start < range.endInstant(day.zone) && plan.end > range.startInstant(day.zone)) { "Fast does not apply to today" }
+        check(dao.recordFastingOutcome(id, outcome.name) == 1)
+    }
+
+    override suspend fun recordTodayMeal(id: String, outcome: MealOutcome, day: AdherenceDay, actual: ActualMeal?) = database.withTransaction {
+        requireToday(day)
+        require(outcome != MealOutcome.PLANNED)
+        val plan = checkNotNull(dao.mealById(id)) { "Meal no longer exists" }
+        require(plan.dateEpochDay == day.date.toEpochDay()) { "Meal does not belong to today" }
+        if (outcome == MealOutcome.CHANGED) {
+            val eaten = requireNotNull(actual) { "Describe the actual meal" }
+            check(dao.recordChangedMeal(id, eaten.text, eaten.time?.toNanoOfDay(), eaten.label, eaten.notes) == 1)
+        } else {
+            require(actual == null) { "Actual details require Changed" }
+            check(dao.recordMealOutcome(id, outcome.name) == 1)
+        }
+    }
+
+    override suspend fun recordTodayActivity(id: String, outcome: ActivityOutcome, day: AdherenceDay) = database.withTransaction {
+        requireToday(day)
+        require(outcome != ActivityOutcome.PLANNED)
+        val plan = checkNotNull(dao.activityById(id)) { "Activity no longer exists" }
+        require(plan.dateEpochDay == day.date.toEpochDay()) { "Activity does not belong to today" }
+        check(dao.recordActivityOutcome(id, outcome.name) == 1)
+    }
 
     override suspend fun copyDay(source: LocalDate, destinations: Set<LocalDate>, zone: ZoneId): CopyResult = database.withTransaction {
         require(destinations.isNotEmpty() && source !in destinations) { "Choose a destination other than the source day." }

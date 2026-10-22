@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isSelectable
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -26,11 +27,12 @@ class AppShellTest {
             "Week" to "My Week",
             "Progress" to "Your adherence history will appear here.",
             "Settings" to "Your app settings will appear here.",
-            "Today" to "Your daily fasting, meals, and activity will appear here."
+            "Today" to "Today"
         )
         screens.forEach { (tab, description) ->
             compose.onNode(isSelectable() and hasText(tab)).performClick().assertIsSelected()
-            compose.onNodeWithText(description).assertIsDisplayed()
+            if (tab == "Today") compose.onNode(hasText(description) and isHeading()).assertIsDisplayed()
+            else compose.onNodeWithText(description).assertIsDisplayed()
         }
 
         compose.onNode(isSelectable() and hasText("Week")).performClick()

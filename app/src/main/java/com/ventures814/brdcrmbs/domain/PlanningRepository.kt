@@ -5,6 +5,9 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 interface PlanningRepository {
+    suspend fun recordTodayFasting(id: String, outcome: FastingOutcome, day: AdherenceDay)
+    suspend fun recordTodayMeal(id: String, outcome: MealOutcome, day: AdherenceDay, actual: ActualMeal? = null)
+    suspend fun recordTodayActivity(id: String, outcome: ActivityOutcome, day: AdherenceDay)
     suspend fun copyDay(source: LocalDate, destinations: Set<LocalDate>, zone: ZoneId): CopyResult
     suspend fun repeatLastWeek(weekContaining: LocalDate, zone: ZoneId): CopyResult
     fun observe(range: DateRange, zone: ZoneId): Flow<PlanningData>
