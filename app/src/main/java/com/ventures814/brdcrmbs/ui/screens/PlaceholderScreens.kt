@@ -20,11 +20,6 @@ import androidx.compose.ui.unit.dp
 import com.ventures814.brdcrmbs.R
 
 @Composable
-fun ProgressScreen(modifier: Modifier = Modifier) {
-    PlaceholderScreen(R.string.nav_progress, R.string.progress_placeholder, modifier)
-}
-
-@Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
     PlaceholderScreen(R.string.nav_settings, R.string.settings_placeholder, modifier)
 }

@@ -25,13 +25,13 @@ class AppShellTest {
         compose.onNode(isSelectable() and hasText("Today")).assertIsSelected()
         val screens = listOf(
             "Week" to "My Week",
-            "Progress" to "Your adherence history will appear here.",
+            "Progress" to "Progress",
             "Settings" to "Your app settings will appear here.",
             "Today" to "Today"
         )
         screens.forEach { (tab, description) ->
             compose.onNode(isSelectable() and hasText(tab)).performClick().assertIsSelected()
-            if (tab == "Today") compose.onNode(hasText(description) and isHeading()).assertIsDisplayed()
+            if (tab == "Today" || tab == "Progress") compose.onNode(hasText(description) and isHeading()).assertIsDisplayed()
             else compose.onNodeWithText(description).assertIsDisplayed()
         }
 

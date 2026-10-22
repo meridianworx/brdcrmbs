@@ -9,7 +9,7 @@
 - **Package name:** com.ventures814.brdcrmbs (namespace and application ID)
 - **Platform:** Android
 - **Repository:** https://github.com/meridianworx/brdcrmbs.git (origin; primary branch main)
-- **Development stage:** Complete Week planning workflow, including shortcuts and finalized navigation/feedback behavior, passed physical-device Product Owner acceptance and is approved/locked. Today adherence and Change Meal / Log Actual implemented; Today physical-device acceptance pending.
+- **Development stage:** Complete Week planning and Today adherence / Change Meal workflows passed physical-device Product Owner acceptance and are approved/locked. Progress monthly review and Day Detail implemented; Progress physical-device acceptance pending.
 
 # Purpose
 
@@ -211,14 +211,14 @@ Product/planning work completed:
 - 12-screen UI/UX baseline approved
 
 Android foundation implemented:
-- Four-destination app shell; Week and Today use the same repository-backed plans. ProgressScreen and SettingsScreen remain placeholders.
+- Four-destination app shell; Week, Today and Progress use the same repository-backed plans. SettingsScreen remains a placeholder.
 - Approved dark charcoal / near-black theme, bright green accent, high-contrast typography, rounded cards, and simple line icons.
 - Week persistence/read-side integration and fasting Add/Edit/Delete implemented; fasting CRUD passed physical-device Product Owner acceptance and is approved/locked.
-- Meal CRUD and Saved Meal selection/persistence passed physical-device acceptance and are approved/locked. Workout / Activity CRUD, Saved Activity selection, and Bakal Gym textual planning passed physical-device acceptance and are approved/locked. Copy Day, Copy to Selected Days, Repeat Last Week, Planning Actions discoverability and finalized Week navigation/feedback passed acceptance and are approved/locked. Today adherence and Change Meal / Log Actual are implemented; Progress calendar and Settings behavior remain unimplemented.
+- Meal CRUD and Saved Meal selection/persistence passed physical-device acceptance and are approved/locked. Workout / Activity CRUD, Saved Activity selection, and Bakal Gym textual planning passed physical-device acceptance and are approved/locked. Copy Day, Copy to Selected Days, Repeat Last Week, Planning Actions discoverability and finalized Week navigation/feedback passed acceptance and are approved/locked. Today adherence and Change Meal / Log Actual passed acceptance and are approved/locked. Progress calendar and read-only Day Detail are implemented; Settings behavior remains unimplemented.
 
 ## In Progress
 
-- Today adherence and Change Meal / Log Actual physical-device acceptance pending. Today is not approved/locked.
+- Progress monthly review and Day Detail physical-device acceptance pending. Progress is not approved/locked. Today adherence and Change Meal / Log Actual passed acceptance and are approved/locked, as confirmed in the Progress request.
 
 ## Planned
 
@@ -375,6 +375,8 @@ Do not add measurement/unit settings unless an implemented feature actually need
 
 # Locked Decisions
 
+- Today adherence and Change Meal / Log Actual passed physical-device Product Owner acceptance and are approved/locked, as confirmed in the Progress request. Earlier pending Today milestone statements below are historical.
+
 - Complete Week planning workflow passed physical-device Product Owner acceptance, as confirmed in the Today request: CRUD, reusable selection, shortcuts, Planning Actions UI, feedback lifecycle and finalized tab/arrow navigation are approved/locked. Earlier pending-acceptance milestone notes are historical.
 
 The following have Product Owner approval and must not be changed casually:
@@ -434,7 +436,7 @@ The approved visual mockups establish the baseline design language. Implementati
 
 # Known Issues
 
-- Week discoverability and navigation corrections passed physical-device acceptance. Today physical-device acceptance remains pending.
+- Week and Today passed physical-device acceptance. Progress physical-device acceptance remains pending. The exact Screen 3 image was not present in the repository or available attachment images during implementation; Progress follows the explicit approved structure and existing visual language, with exact-reference visual comparison pending.
 - Exact backup storage/destination implementation is not yet selected.
 
 # Backlog
@@ -449,7 +451,7 @@ Future health measurements must not automatically control the user's plan.
 
 # Current Development Focus
 
-Product Owner physical-device acceptance of Today adherence and Change Meal / Log Actual. Preserve the complete locked Week planning workflow and its tab-entry/today versus arrow/Monday navigation rules. Progress, Day Detail, rescheduling, reminders, Backup & Restore and Settings reusable-item management remain outside this milestone. Today is not marked approved/locked.
+Product Owner physical-device acceptance of Progress monthly review and read-only Day Detail. Preserve locked Week and Today workflows. Rescheduling, reminders, Backup & Restore and Settings reusable-item management remain outside this milestone. Progress is not approved/locked.
 
 # Recent Milestones
 
@@ -643,3 +645,21 @@ Product Owner physical-device acceptance of Today adherence and Change Meal / Lo
 - Confirmed the earlier startup ANR belonged to emulator com.android.systemui; clearing its dialog restored input before the passing Today-specific run. No production workaround or weakened assertion was introduced. The final full regression run passed without an affected-test rerun. Temporary proportional display settings were restored to 1440x3120 / density 560 and the task-created emulator was stopped after validation.
 - Remaining lint notices are one redundant activity label, seven unused starter colors and three dependency update notices. Removed only the obsolete Today placeholder string. No unresolved automated build/test failure remains. Room remains version 4 with unchanged entities, schemas and migrations; dependencies, SDK setup and locked Week production files are unchanged.
 - Current focus remains Product Owner physical-device acceptance of Today adherence and Change Meal / Log Actual. Automated validation is complete; Today is not approved/locked.
+
+## Progress Review / Day Detail — 2026-10-22
+
+- Product Owner confirmed complete Today adherence and Change Meal / Log Actual physical-device acceptance and approval/locking. Complete Week and Today production workflows remain unchanged. Previous pending Today milestone notes are historical.
+- Replaced Progress placeholder with branding/title, three top summary cards in Fasting / Meals / Activity order, monthly calendar, selected/current-date treatment, Success / Changed / Missed / Planned legend, and read-only Day Detail directly below. Existing near-black/charcoal/green/off-white Material 3 styling and bottom navigation are retained. No Screen 3 image was found in the repository or available attachment images; implemented the explicitly specified structure, with exact-reference comparison pending.
+- Calendar uses Monday-first weekdays consistent with Week, real YearMonth lengths/offsets including leap years, unrestricted previous/next month navigation, and selected-date outline/today accent. Month arrows select the first date of the destination month. Entering/re-entering/reselecting Progress resets to the current device-local month/today. In-place browsing survives ordinary recomposition/recreation; resume/system date/time/zone refresh updates the current-day marker and viewing zone without discarding browsed context.
+- Every date has three separated F / M / A letter-and-status-symbol positions, not one daily color. Neutral is —; Planned is ○; Success is ✓; Changed is ◐; Missed is ✕. Calendar cells expose full category status/fraction and current-date semantics. Narrow/enlarged displays can scroll the calendar horizontally rather than compressing the indicators below the minimum calendar width.
+- Deterministic per-day aggregation: Fasting and Activity use any Missed → Missed, otherwise all Done → Success, otherwise Planned; no events → neutral. Meals use any Missed → Missed, otherwise any Changed → Changed, otherwise all Done → Success, otherwise Planned; no meals → neutral. Meal fraction is Done / all planned meals for that date: Changed remains distinct and is not counted as Done. Explicit No fast is intentional and neutral, shown in Day Detail and explained below the legend; it is excluded from fasting success/failure denominators. If fasting events and No fast coexist, events determine the fasting indicator and both remain visible in detail; no conflict is silently resolved.
+- Monthly summaries round Done / resolved × 100 to the nearest whole percent. Fasting resolved = Done + Missed events overlapping the displayed month, counted once per event even if it spans many dates or begins in an earlier month. Meals resolved = Done + Changed + Missed dated in the month; Changed is resolved but not full Success. Activity resolved = Done + Missed dated in the month. All Planned records are excluded, including future Planned records; nothing planned and No fast do not lower adherence. No resolved records displays —, while genuinely resolved all-unsuccessful records show 0%. Numerator/denominator are shown beneath each percentage.
+- Continuous fasts retain one stored event and full original-zone endpoints. Half-open local-day overlap displays them on every applicable date, excluding a midnight end from the next day. Restrained ← F → continuation markers identify continuation across dates, including calendar rows/month boundaries, without creating daily records. Selected Day Detail retains the exact applicable event identity and schedule.
+- Day Detail displays every selected-day fasting schedule/preset/notes/outcome, explicit No fast, planned meal text/time/label/notes/outcome, Changed actual text/time/label/notes separately, and every Workout / Activity name/type/time/notes/outcome. It has no adherence editors, writes, rescheduling or competing Today workflow. Retained actual snapshots for non-Changed corrected meals are not presented as the current actual outcome. No daily-note table exists; editable daily notes are deferred without a schema change.
+- Added pure domain ProgressReview aggregation/read models and ProgressViewModel/ProgressRoute/ProgressScreen. Uses existing PlanningRepository.observe with one displayed-month range and fasting overlap, then aggregates in memory. Selecting a date reuses the snapshot with no per-cell/per-date database query. Lifecycle-aware state distinguishes loading/read failure/neutral empty success and supports retry. Compose never accesses DAOs. No repository write/API, entity, schema, migration, dependency or SDK change; Room remains version 4.
+- Tests added for calendar/leap/weekday/month/year/DST boundaries, status precedence, fractions, resolved summaries, Changed separation, neutral No fast, overlapping single-event fasts, reactive monthly observation, query count on selection, restoration/reset and read-failure recovery; Compose coverage includes summaries, F/M/A, legend, continuation, read-only detail, month/date navigation and tab reset. Existing shell assertion now checks the functional Progress heading; custom Week navigation fixtures preload ProgressViewModel without changing their assertions.
+- Progress physical-device Product Owner acceptance remains pending. Progress is not approved/locked. Daily notes, Progress outcome editing, rescheduling, reminders, Backup & Restore, reusable Settings management, detailed logging, health measurements, nutrition, photos, recommendations and cloud functionality remain outside this milestone.
+- Validation passed using the repository wrapper: :app:assembleDebug, :app:testDebugUnitTest (38 tests, 0 failures/errors/skipped), :app:assembleDebugAndroidTest, :app:lintDebug (0 errors, 11 existing warnings), and the final complete :app:connectedDebugAndroidTest run targeting emulator-5554 (70 tests, 0 failures/errors/skipped in one run). All 6 new Progress state/UI tests, all locked Week/Today workflows, shortcuts, saved-item workflows, persistence and migrations passed. Seven new pure aggregation/calendar tests are included in the JVM total.
+- During UI validation, captured bounds/screenshot exposed weighted calendar cells collapsing to zero width under an unbounded horizontal scroll container. Gave the calendar a finite viewport-based width with a 336dp minimum and used clickable Material 3 date surfaces. The normal-click November 30 selection regression now also asserts a usable cell width; original selection/status/data assertions remain. New Progress UI waits allow 30 seconds for asynchronous state/frames on the slow emulator; a prior 10-second tab-reset timeout already had the expected state when captured. The final full suite passed without reruns.
+- Cold boot encountered the previously observed emulator com.android.systemui ANR, confirmed through window diagnostics and a screenshot over the running app. Cleared its Close app dialog before validation; no production workaround or assertion removal was introduced. Existing lint warnings remain one redundant activity label, seven unused starter colors and three dependency update notices. No unresolved automated build/test failure remains.
+- Visually checked the final Progress screen in the normal app shell: dark styling, top cards, readable seven-column F/M/A calendar, selected-today outline and bottom navigation. Test screenshots/logs stay in ignored build output. Restored emulator display to its original 1440x3120 / density 560 and stopped the task-created emulator after validation; the physical phone was not used for automated testing. Exact-reference comparison and Product Owner physical-device acceptance remain pending.

@@ -17,6 +17,7 @@ import com.ventures814.brdcrmbs.ui.BrdcrmbsApp
 import com.ventures814.brdcrmbs.ui.theme.BrdcrmbsTheme
 import com.ventures814.brdcrmbs.ui.week.WeekViewModel
 import com.ventures814.brdcrmbs.ui.today.TodayViewModel
+import com.ventures814.brdcrmbs.ui.progress.ProgressViewModel
 import java.time.*
 import kotlinx.coroutines.runBlocking
 import org.junit.*
@@ -42,6 +43,8 @@ class WeekContextUiTest {
         owner.viewModelStore.put("androidx.lifecycle.ViewModelProvider.DefaultKey:${WeekViewModel::class.java.name}", model)
         owner.viewModelStore.put("androidx.lifecycle.ViewModelProvider.DefaultKey:${TodayViewModel::class.java.name}",
             TodayViewModel(repository, SavedStateHandle(), Clock.fixed(today.atTime(12, 0).atZone(testZone).toInstant(), testZone)))
+        owner.viewModelStore.put("androidx.lifecycle.ViewModelProvider.DefaultKey:${ProgressViewModel::class.java.name}",
+            ProgressViewModel(repository, SavedStateHandle(), Clock.fixed(today.atTime(12, 0).atZone(testZone).toInstant(), testZone)))
         restoration = StateRestorationTester(compose)
         restoration.setContent {
             CompositionLocalProvider(LocalViewModelStoreOwner provides owner) { BrdcrmbsTheme { BrdcrmbsApp() } }

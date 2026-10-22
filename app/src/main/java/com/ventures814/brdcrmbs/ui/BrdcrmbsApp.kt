@@ -20,7 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.ventures814.brdcrmbs.R
-import com.ventures814.brdcrmbs.ui.screens.ProgressScreen
+import com.ventures814.brdcrmbs.ui.progress.ProgressRoute
 import com.ventures814.brdcrmbs.ui.screens.SettingsScreen
 import com.ventures814.brdcrmbs.ui.today.TodayRoute
 import com.ventures814.brdcrmbs.ui.week.WeekRoute
@@ -38,6 +38,7 @@ fun BrdcrmbsApp() {
     var selected by rememberSaveable { mutableStateOf(Destination.Today) }
     var editorVisible by remember { mutableStateOf(false) }
     var resetWeekRequested by remember { mutableStateOf(false) }
+    var resetProgressRequested by remember { mutableStateOf(false) }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
@@ -47,6 +48,7 @@ fun BrdcrmbsApp() {
                         selected = selected == destination,
                         onClick = {
                             if (destination == Destination.Week) resetWeekRequested = true
+                            if (destination == Destination.Progress) resetProgressRequested = true
                             selected = destination
                         },
                         icon = { Icon(painterResource(destination.icon), contentDescription = null) },
@@ -61,7 +63,8 @@ fun BrdcrmbsApp() {
             Destination.Today -> TodayRoute(screenModifier, onEditorVisible = { editorVisible = it })
             Destination.Week -> WeekRoute(screenModifier, onEditorVisible = { editorVisible = it },
                 resetToTodayRequested = resetWeekRequested, onResetHandled = { resetWeekRequested = false })
-            Destination.Progress -> ProgressScreen(screenModifier)
+            Destination.Progress -> ProgressRoute(screenModifier, resetToTodayRequested = resetProgressRequested,
+                onResetHandled = { resetProgressRequested = false })
             Destination.Settings -> SettingsScreen(screenModifier)
         }
     }
