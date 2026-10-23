@@ -9,6 +9,10 @@ import com.ventures814.brdcrmbs.ui.BrdcrmbsApp
 import com.ventures814.brdcrmbs.ui.theme.BrdcrmbsTheme
 
 class MainActivity : ComponentActivity() {
+    override fun onResume() {
+        super.onResume()
+        (application as BrdcrmbsApplication).reminders.refresh()
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(

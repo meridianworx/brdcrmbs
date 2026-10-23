@@ -25,7 +25,7 @@ class SettingsViewModel(private val repository: PlanningRepository, private val 
 
     fun retry() { retry.value++ }
     fun open(target: SettingsPage) { if (!busy.value) { saved["settingsPage"] = target; saved["savedItemDraft"] = null; error.value = null } }
-    fun add() { if (!busy.value && page.value != SettingsPage.HOME) { saved["savedItemDraft"] = SavedItemDraft(page.value); error.value = null } }
+    fun add() { if (!busy.value && page.value in listOf(SettingsPage.MEALS, SettingsPage.ACTIVITIES)) { saved["savedItemDraft"] = SavedItemDraft(page.value); error.value = null } }
     fun edit(item: SavedMeal) { if (!busy.value) { saved["savedItemDraft"] = SavedItemDraft.from(item); error.value = null } }
     fun edit(item: SavedActivity) { if (!busy.value) { saved["savedItemDraft"] = SavedItemDraft.from(item); error.value = null } }
     fun change(transform: (SavedItemDraft) -> SavedItemDraft) { if (!busy.value) draft.value?.let { saved["savedItemDraft"] = transform(it) } }

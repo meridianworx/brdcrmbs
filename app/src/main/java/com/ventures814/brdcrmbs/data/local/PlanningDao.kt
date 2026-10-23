@@ -7,6 +7,12 @@ import androidx.room.Update
 
 @Dao
 interface PlanningDao {
+    @Query("SELECT * FROM fasting_events WHERE outcome = 'PLANNED'")
+    suspend fun reminderFasting(): List<FastingEntity>
+    @Query("SELECT * FROM meal_plans WHERE outcome = 'PLANNED' AND timeNanoOfDay IS NOT NULL")
+    suspend fun reminderMeals(): List<MealEntity>
+    @Query("SELECT * FROM activity_plans WHERE outcome = 'PLANNED' AND timeNanoOfDay IS NOT NULL")
+    suspend fun reminderActivities(): List<ActivityEntity>
     @Query("SELECT * FROM saved_meals ORDER BY text COLLATE NOCASE, id")
     fun observeSavedMeals(): kotlinx.coroutines.flow.Flow<List<SavedMealEntity>>
     @Query("SELECT * FROM saved_activities ORDER BY name COLLATE NOCASE, id")

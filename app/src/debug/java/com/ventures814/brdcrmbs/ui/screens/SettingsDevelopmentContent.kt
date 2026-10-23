@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -53,6 +54,23 @@ internal fun SettingsDevelopmentContent() {
         initializer { QaToolsModel(ProgressQaSeeder(app.planningDatabase)) }
     })
     ProgressQaTools(model)
+    ReminderDiagnostics(app)
+}
+
+@Composable
+private fun ReminderDiagnostics(app: BrdcrmbsApplication) {
+    val pending by app.reminders.pending.collectAsStateWithLifecycle()
+    val error by app.reminders.error.collectAsStateWithLifecycle()
+    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Reminder diagnostics", style = MaterialTheme.typography.titleMedium)
+            Text("Pending reminders: ${pending.size}")
+            OutlinedButton(onClick = app.reminders::refresh) { Text("Reconcile reminders now") }
+            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            pending.take(20).forEach { Text("${it.type} · ${it.at.atZone(java.time.ZoneId.systemDefault())}", style = MaterialTheme.typography.bodySmall) }
+            if (pending.size > 20) Text("Showing the next 20 reminders.")
+        }
+    }
 }
 
 @Composable

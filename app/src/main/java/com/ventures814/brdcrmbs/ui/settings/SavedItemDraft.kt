@@ -4,7 +4,7 @@ import com.ventures814.brdcrmbs.domain.*
 import java.io.Serializable
 import java.util.UUID
 
-enum class SettingsPage { HOME, MEALS, ACTIVITIES }
+enum class SettingsPage { HOME, MEALS, ACTIVITIES, REMINDERS }
 
 /** Reusable library details only; no schedule, outcome or connection to a planned item. */
 data class SavedItemDraft(
@@ -16,7 +16,7 @@ data class SavedItemDraft(
     val notes: String = "",
     val type: ActivityType = ActivityType.ACTIVITY
 ) : Serializable {
-    init { require(page != SettingsPage.HOME) }
+    init { require(page == SettingsPage.MEALS || page == SettingsPage.ACTIVITIES) }
     fun meal(): SavedMeal {
         require(page == SettingsPage.MEALS)
         return SavedMeal(id, name, label.takeUnless(String::isEmpty), notes.takeUnless(String::isEmpty))

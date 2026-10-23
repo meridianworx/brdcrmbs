@@ -13,6 +13,12 @@ import kotlinx.coroutines.flow.map
 class RoomPlanningRepository(private val database: PlanningDatabase, private val adherenceClock: java.time.Clock? = null) : PlanningRepository {
     private val dao = database.planningDao()
 
+    override fun observeReminderPlans(): Flow<PlanningData> =
+        database.invalidationTracker.createFlow("fasting_events", "meal_plans", "activity_plans")
+            .map { database.withTransaction {
+                PlanningData(dao.reminderFasting().map { it.model() }, dao.reminderMeals().map { it.model() }, dao.reminderActivities().map { it.model() })
+            } }.distinctUntilChanged()
+
     override fun observeSavedMeals() = dao.observeSavedMeals().map { rows -> rows.map { it.model() } }
     override fun observeSavedActivities() = dao.observeSavedActivities().map { rows -> rows.map { it.model() } }
     // Library mutations target only independent template tables, never scheduled plans/history.

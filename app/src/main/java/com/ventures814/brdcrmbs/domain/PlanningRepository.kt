@@ -5,6 +5,7 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 interface PlanningRepository {
+    fun observeReminderPlans(): Flow<PlanningData>
     fun observeSavedMeals(): Flow<List<SavedMeal>>
     fun observeSavedActivities(): Flow<List<SavedActivity>>
     suspend fun saveSavedMeal(meal: SavedMeal, isNew: Boolean)
