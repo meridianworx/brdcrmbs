@@ -3,6 +3,7 @@ package com.ventures814.brdcrmbs.ui.screens
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -21,14 +22,15 @@ import com.ventures814.brdcrmbs.R
 
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
-    PlaceholderScreen(R.string.nav_settings, R.string.settings_placeholder, modifier)
+    PlaceholderScreen(R.string.nav_settings, R.string.settings_placeholder, modifier) { SettingsDevelopmentContent() }
 }
 
 @Composable
 private fun PlaceholderScreen(
     @StringRes title: Int,
     @StringRes description: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit = {}
 ) {
     Column(
         modifier = modifier.verticalScroll(rememberScrollState()).padding(24.dp),
@@ -67,5 +69,6 @@ private fun PlaceholderScreen(
                 )
             }
         }
+        content()
     }
 }
