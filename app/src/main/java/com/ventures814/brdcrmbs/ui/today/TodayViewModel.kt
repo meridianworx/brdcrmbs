@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ventures814.brdcrmbs.domain.*
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -14,13 +15,20 @@ data class TodayState(val day: AdherenceDay, val plans: PlanningData = PlanningD
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TodayViewModel(private val repository: PlanningRepository, private val saved: SavedStateHandle,
-    private val clock: Clock? = null) : ViewModel() {
+    private val clock: Clock? = null,
+    minuteTicks: Flow<Unit> = flow { while (true) { delay(60_000); emit(Unit) } }) : ViewModel() {
+    private fun currentInstant(): Instant = (clock ?: Clock.systemDefaultZone()).instant()
     private fun currentDay(): AdherenceDay {
         val current = clock ?: Clock.systemDefaultZone()
         return AdherenceDay(LocalDate.now(current), current.zone)
     }
     private val day = MutableStateFlow(currentDay())
     private val refreshVersion = MutableStateFlow(0)
+    // Cold upstream stops immediately when Today is no longer lifecycle-collected.
+    // Re-subscription and foreground/time-change refresh read the clock immediately.
+    val fastingTime = merge(minuteTicks, refreshVersion.map { Unit })
+        .map { currentInstant() }.onStart { emit(currentInstant()) }.distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), currentInstant())
     val busy = MutableStateFlow(false)
     val error = MutableStateFlow<String?>(null)
     val draft = saved.getStateFlow<ActualMealDraft?>("actualMealDraft", null)

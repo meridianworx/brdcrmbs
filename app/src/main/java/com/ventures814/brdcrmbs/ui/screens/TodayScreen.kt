@@ -6,16 +6,20 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.ventures814.brdcrmbs.R
 import com.ventures814.brdcrmbs.domain.*
-import com.ventures814.brdcrmbs.ui.today.TodayState
+import com.ventures814.brdcrmbs.ui.today.*
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -25,7 +29,8 @@ private fun LocalTime.display() = format(DateTimeFormatter.ofPattern("h:mm a"))
 fun TodayScreen(state: TodayState, busy: Boolean, error: String?,
     onFasting: (String, FastingOutcome) -> Unit, onMeal: (String, MealOutcome) -> Unit,
     onActivity: (String, ActivityOutcome) -> Unit, onActual: (String) -> Unit,
-    onRetry: () -> Unit, modifier: Modifier = Modifier) {
+    onRetry: () -> Unit, now: Instant, modifier: Modifier = Modifier) {
+    val activeId = activeFastingId(state.plans.fasting, now)
     Column(modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("brdcrmbs", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         Text("Today", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.semantics { heading() }.testTag("todayHeading"))
@@ -44,6 +49,20 @@ fun TodayScreen(state: TodayState, busy: Boolean, error: String?,
                 Text("${fast.start.atZone(fast.zone).format(format)} →\n${fast.end.atZone(fast.zone).format(format)}")
                 Secondary("${minutes / 60}h ${minutes % 60}m · ${fast.zone.id}")
                 fast.notes?.let { Secondary(it) }
+                if (fast.id == activeId) {
+                    val progress = fast.progressAt(now)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        LinearProgressIndicator(progress = { progress.fraction },
+                            modifier = Modifier.weight(1f).height(6.dp).clip(MaterialTheme.shapes.small)
+                                .semantics { contentDescription = "Fasting time progress" }.testTag("fastingProgress-${fast.id}"),
+                            color = MaterialTheme.colorScheme.primary, trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+                        Text("${progress.percent}%", style = MaterialTheme.typography.titleMedium, modifier = Modifier.testTag("fastingPercent-${fast.id}"))
+                    }
+                    Text("${remainingFastingTime(progress.remaining)} remaining", modifier = Modifier.testTag("fastingRemaining-${fast.id}"))
+                    Secondary(fast.endTimeLabel(now))
+                } else if (fast.outcome == FastingOutcome.PLANNED && now >= fast.end) {
+                    Secondary("Planned time complete · 100%")
+                }
                 OutcomeControls("fast-${fast.id}", fast.outcome.name, false, busy,
                     { onFasting(fast.id, FastingOutcome.DONE) }, { onFasting(fast.id, FastingOutcome.MISSED) })
                 HorizontalDivider()

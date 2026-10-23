@@ -47,5 +47,8 @@ fun TodayRoute(modifier: Modifier = Modifier, model: TodayViewModel = rememberTo
     DisposableEffect(Unit) { onDispose { onEditorVisible(false) } }
     BackHandler(editing) { model.closeActual() }
     if (editing) ActualMealEditor(draft, original, busy, error, model::changeActual, model::saveActual, model::closeActual, modifier)
-    else TodayScreen(state, busy, error, model::fasting, model::meal, model::activity, model::openActual, model::refresh, modifier)
+    else {
+        val now by model.fastingTime.collectAsStateWithLifecycle()
+        TodayScreen(state, busy, error, model::fasting, model::meal, model::activity, model::openActual, model::refresh, now, modifier)
+    }
 }
