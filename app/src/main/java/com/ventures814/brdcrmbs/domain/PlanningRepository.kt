@@ -5,6 +5,12 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 interface PlanningRepository {
+    fun observeSavedMeals(): Flow<List<SavedMeal>>
+    fun observeSavedActivities(): Flow<List<SavedActivity>>
+    suspend fun saveSavedMeal(meal: SavedMeal, isNew: Boolean)
+    suspend fun saveSavedActivity(activity: SavedActivity, isNew: Boolean)
+    suspend fun deleteSavedMeal(id: String)
+    suspend fun deleteSavedActivity(id: String)
     suspend fun recordTodayFasting(id: String, outcome: FastingOutcome, day: AdherenceDay)
     suspend fun recordTodayMeal(id: String, outcome: MealOutcome, day: AdherenceDay, actual: ActualMeal? = null)
     suspend fun recordTodayActivity(id: String, outcome: ActivityOutcome, day: AdherenceDay)

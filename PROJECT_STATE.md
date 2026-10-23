@@ -9,7 +9,7 @@
 - **Package name:** com.ventures814.brdcrmbs (namespace and application ID)
 - **Platform:** Android
 - **Repository:** https://github.com/meridianworx/brdcrmbs.git (origin; primary branch main)
-- **Development stage:** Complete Week planning and Today adherence / Change Meal workflows passed physical-device Product Owner acceptance and are approved/locked. Progress monthly review and Day Detail implemented; Progress physical-device acceptance pending.
+- **Development stage:** Week planning, Today adherence / Change Meal, and corrected Progress monthly review / Day Detail passed physical-device Product Owner acceptance and are approved/locked. Settings foundation and reusable-library management are implemented; their physical-device acceptance remains pending.
 
 # Purpose
 
@@ -211,14 +211,14 @@ Product/planning work completed:
 - 12-screen UI/UX baseline approved
 
 Android foundation implemented:
-- Four-destination app shell; Week, Today and Progress use the same repository-backed plans. SettingsScreen remains a placeholder.
+- Four-destination app shell; Week, Today and Progress use the same repository-backed plans. Settings has grouped navigation and independent Saved Meals / Saved Activities library management.
 - Approved dark charcoal / near-black theme, bright green accent, high-contrast typography, rounded cards, and simple line icons.
 - Week persistence/read-side integration and fasting Add/Edit/Delete implemented; fasting CRUD passed physical-device Product Owner acceptance and is approved/locked.
-- Meal CRUD and Saved Meal selection/persistence passed physical-device acceptance and are approved/locked. Workout / Activity CRUD, Saved Activity selection, and Bakal Gym textual planning passed physical-device acceptance and are approved/locked. Copy Day, Copy to Selected Days, Repeat Last Week, Planning Actions discoverability and finalized Week navigation/feedback passed acceptance and are approved/locked. Today adherence and Change Meal / Log Actual passed acceptance and are approved/locked. Progress calendar and read-only Day Detail are implemented; Settings behavior remains unimplemented.
+- Meal CRUD and Saved Meal selection/persistence passed physical-device acceptance and are approved/locked. Workout / Activity CRUD, Saved Activity selection, and Bakal Gym textual planning passed physical-device acceptance and are approved/locked. Copy Day, Copy to Selected Days, Repeat Last Week, Planning Actions discoverability and finalized Week navigation/feedback passed acceptance and are approved/locked. Today adherence and Change Meal / Log Actual passed acceptance and are approved/locked. Corrected Progress calendar / Day Detail passed populated physical-device acceptance and is approved/locked. Settings foundation and saved-library create/edit/delete are implemented; their physical-device acceptance remains pending.
 
 ## In Progress
 
-- Progress monthly review and Day Detail physical-device acceptance pending. Progress is not approved/locked. Today adherence and Change Meal / Log Actual passed acceptance and are approved/locked, as confirmed in the Progress request.
+- Settings foundation and Saved Meals / Saved Activities management passed automated validation and emulator visual review; physical-device acceptance remains pending. Corrected Progress passed populated physical-device review using the debug QA dataset; Product Owner said "looks good" and approved/locked it. Earlier pending Progress milestone statements below are historical.
 
 ## Planned
 
@@ -375,6 +375,8 @@ Do not add measurement/unit settings unless an implemented feature actually need
 
 # Locked Decisions
 
+- Progress is approved/locked following Product Owner populated physical-device acceptance: compact summary rings, real resolved percentages/counts, calendar/category indicators, legend/date selection, consolidated Day Detail/daily score, expanded full-history details, multi-day fasting and existing aggregation/business rules. Do not redesign or change these behaviors during Settings work.
+
 - Today adherence and Change Meal / Log Actual passed physical-device Product Owner acceptance and are approved/locked, as confirmed in the Progress request. Earlier pending Today milestone statements below are historical.
 
 - Complete Week planning workflow passed physical-device Product Owner acceptance, as confirmed in the Today request: CRUD, reusable selection, shortcuts, Planning Actions UI, feedback lifecycle and finalized tab/arrow navigation are approved/locked. Earlier pending-acceptance milestone notes are historical.
@@ -400,7 +402,7 @@ The following have Product Owner approval and must not be changed casually:
 - Fasting Add/Edit/Delete passed physical-device Product Owner acceptance and is approved/locked, as confirmed in the Meal workflow request on 2026-10-20.
 
 - Meal CRUD and Saved Meal selection passed physical-device Product Owner acceptance and are approved/locked, as confirmed in the activity workflow request.
-- Saved Meal deletion/management belongs in Settings → Saved Meals; Saved Activity deletion/management belongs in Settings → Saved Activities. Week editors only plan/select reusable items; management is deferred.
+- Saved Meal deletion/management belongs in Settings → Saved Meals; Saved Activity deletion/management belongs in Settings → Saved Activities. Week editors only plan/select reusable items; Settings manages the independent reusable libraries.
 
 - Workout / Activity CRUD, Saved Activity selection, and Bakal Gym textual planning passed physical-device Product Owner acceptance and are approved/locked, as confirmed in the planning-shortcuts request.
 
@@ -438,7 +440,7 @@ Progress Screen 3 visual source of truth: docs/design/progress-approved-screen-3
 
 # Known Issues
 
-- Week and Today passed physical-device acceptance. Progress functionality passed automated validation, but physical-device review found substantial visual divergence from approved Screen 3. A focused presentation correction is implemented; Product Owner physical-device retest remains pending. The supplied approved image is now retained at docs/design/progress-approved-screen-3.png.
+- Week, Today and corrected Progress passed physical-device Product Owner acceptance and are approved/locked. The populated Progress review used the debug QA dataset, including mixed statuses, meal fractions, full Day Detail and overlapping fasting. Earlier visual divergence is resolved; the approved reference remains at docs/design/progress-approved-screen-3.png.
 - Exact backup storage/destination implementation is not yet selected.
 
 # Backlog
@@ -453,9 +455,9 @@ Future health measurements must not automatically control the user's plan.
 
 # Current Development Focus
 
-Product Owner physical-device retest of the Progress Screen 3 presentation correction, monthly review and read-only Day Detail. Preserve locked Week and Today workflows. Rescheduling, reminders, Backup & Restore and Settings reusable-item management remain outside this milestone. Progress is not approved/locked.
+Product Owner physical-device acceptance of Settings foundation and Saved Meals / Saved Activities management, preserving locked Week, Today and Progress behavior. Reminders, Backup & Restore, App Preferences, Data Management and About remain future Settings milestones.
 
-Debug builds provide Settings → Developer / Testing → Progress Test Data for repeatable physical-device QA of Week, Today and Progress. This is development tooling, not product Settings functionality; Progress physical-device acceptance remains pending.
+Debug builds provide Settings → Developer / Testing → Progress Test Data for repeatable physical-device QA of Week, Today and Progress. This is development tooling, not product Settings functionality; source-set release isolation must be preserved.
 
 # Recent Milestones
 
@@ -701,3 +703,19 @@ Debug builds provide Settings → Developer / Testing → Progress Test Data for
 - Manual emulator verification used the actual Settings entry point: confirmed Seed produced persisted Progress summaries Fasting 67% (2/3), Meals 75% (6/8), Activity 80% (4/5) for the October test week; confirmed Reset returned Progress to neutral 0/0 summaries and Nothing planned detail. Automated ViewModel coverage separately verifies Week and Today updates. No physical phone was used for automated testing or seeded by Codex.
 - Environment: the recurring cold-boot emulator com.android.systemui ANR was confirmed and dismissed before tests. Slow combined lint/build validation was cancelled and rerun with fewer workers; final checks passed. Remaining lint notices are one redundant activity label, seven unused starter colors and three dependency update notices; the existing native-library stripping notice is non-blocking. Progress physical-device Product Owner acceptance remains pending and Progress is not approved/locked.
 - Final visual review confirmed the debug section uses the existing charcoal/green theme. Restored emulator display to 1440x3120 / density 560 and stopped the task-created emulator; temporary captures, test logs and APK isolation evidence remain in ignored build output.
+
+## Settings Foundation / Saved Libraries — 2026-10-22
+
+- Product Owner tested the corrected, populated Progress screen on a physical Android device using the QA dataset and said "looks good". Summary rings/resolved scores, mixed category indicators and fractions, neutral/Planned states, Day Detail/daily percentage, expanded history and overlapping fasting are accepted. Progress presentation and existing business rules are now approved/locked; earlier pending Progress notes are historical.
+- Replaced the Settings placeholder with compact charcoal/green grouped rows: Planning (Saved Meals / Saved Activities), Reminders, Data (Backup & Restore / Data Management), App (App Preferences / About). Future workflows are intentionally inactive and labelled Coming in a later milestone; none is represented as implemented.
+- Saved Meals and Saved Activities have reactive library lists, useful empty states, optional direct Add, focused edit screens and confirmed Delete. Meals store name, optional label and notes; activities store name, Workout/Activity type and optional notes. No scheduling date/time, adherence state, photos, Bakal Gym integration or automatic plan creation. Bakal Gym remains ordinary user-entered text.
+- Saved templates and scheduled plans are independent snapshots. Repository create/update/delete APIs target only saved_meals or saved_activities; existing planning/adherence mutation paths are unchanged. Updates retain template identity; missing-row updates fail instead of recreating deleted items, and inserts reject duplicate IDs. Template changes/deletion cannot rewrite scheduled plans, Changed actual meals, outcomes or activity historical links.
+- Compose → SettingsViewModel / SavedStateHandle → PlanningRepository → Room. Added observation and minimal CRUD APIs for the existing reusable tables. Lists react to library changes; loading/read errors are distinct from empty success and support retry. Drafts survive recreation, Back discards unsaved edits, save failures retain entries, and busy state prevents duplicate submits or navigation during writes.
+- Saved library lists/editors are focused Settings child screens with bottom navigation hidden, consistent with Week editors. Back returns editor → library → Settings main; main preserves Today / Week / Progress / Settings order. No Week/Today/Progress navigation/reset rule was changed. The shell regression now asserts Saved Meals instead of the removed placeholder text, retaining its existing tab/restoration assertions.
+- Preserved the debug-only Progress QA section at the end of Settings main through the existing variant extension. Debug implementation and empty release counterpart are unchanged; no runtime debug checks or production seeding path added. Room remains version 4; entities, schemas, migrations, SDK/dependencies and locked feature screens/editors/calculations are unchanged.
+- Settings is not complete: Reminders, Backup & Restore, App Preferences, Data Management and About remain future milestones. Saved Meals / Saved Activities management physical-device Product Owner acceptance remains pending.
+- Final resumed validation completed 2026-10-23: wrapper :app:assembleDebug, :app:assembleRelease (unsigned), :app:testDebugUnitTest (47 tests, 0 failures/errors/skipped), :app:assembleDebugAndroidTest, :app:lintDebug and :app:lintRelease passed. Each lint variant reports 0 errors and 11 existing warnings (one redundant activity label, seven unused starter colors, three dependency update notices). No dependency upgrade was made.
+- Final full emulator regression passed 91/91 with 0 failures/errors/skipped on Pixel_6_Pro, API 37. This includes all 10 new saved-library/Settings/debug Settings tests, all 9 existing QA seeder tests, migration/storage/history coverage, Planning Actions and locked Week/Today/Progress regressions. Integrity tests schedule actual template snapshots, edit/delete templates, reopen Room and compare full plans/history unchanged, including original Changed meal plus actual snapshot, Missed/rescheduled activity links and continuous multi-day fasting. Direct template creation creates no plans.
+- Interrupted validation was inspected rather than assumed successful: its full run finished 88/91, with three test-fixture failures when custom ViewModelStoreOwners entered Settings without supplying SettingsViewModel/SavedStateHandle. Added that ViewModel to the existing ProgressUiTest and WeekContextUiTest fixtures, matching their other tab fixtures; assertions and locked production behavior are unchanged. An earlier new SavedLibraryTest had a non-void inferred JUnit return; corrected only its final return to Unit, then its complete group passed 5/5. All 19 distinct focused Settings/library/QA tests passed across focused runs before the final clean 91/91 full run.
+- Emulator cold boot had the recurring com.android.systemui ANR; its system dialog was dismissed before validation. No test assertions or production code were changed for emulator timing. The final complete run had no failures, including the historically slow Activity UI test. Final APK DEX checks confirmed QA seeder/scenario/ownership/model classes, developer labels, seed/reset labels and reserved ID prefix present in debug and absent in release; source-set implementation remains unchanged.
+- Manual emulator visual review through the real app verified all Settings groups, both useful empty states, compact populated library cards, meal/activity editors and type controls, clear confirmed-delete safeguards, editor → library → main Back behavior, hidden child bottom navigation and restored main navigation. Scrolled to fully visible Seed/Reset controls; no oversized or clipped controls were found. Temporary review templates were deleted. No physical phone was targeted or seeded. Captures/reports remain in ignored build output; emulator display was restored to 1440x3120 / density 560 and the task-created emulator stopped. Saved-library Product Owner physical-device acceptance remains pending; this milestone does not approve all Settings.

@@ -26,7 +26,7 @@ class AppShellTest {
         val screens = listOf(
             "Week" to "My Week",
             "Progress" to "PROGRESS",
-            "Settings" to "Your app settings will appear here.",
+            "Settings" to "Saved Meals",
             "Today" to "Today"
         )
         screens.forEach { (tab, description) ->

@@ -7,6 +7,16 @@ import androidx.room.Update
 
 @Dao
 interface PlanningDao {
+    @Query("SELECT * FROM saved_meals ORDER BY text COLLATE NOCASE, id")
+    fun observeSavedMeals(): kotlinx.coroutines.flow.Flow<List<SavedMealEntity>>
+    @Query("SELECT * FROM saved_activities ORDER BY name COLLATE NOCASE, id")
+    fun observeSavedActivities(): kotlinx.coroutines.flow.Flow<List<SavedActivityEntity>>
+    @Update suspend fun updateSavedMeal(meal: SavedMealEntity): Int
+    @Update suspend fun updateSavedActivity(activity: SavedActivityEntity): Int
+    @Query("DELETE FROM saved_meals WHERE id = :id")
+    suspend fun deleteSavedMeal(id: String): Int
+    @Query("DELETE FROM saved_activities WHERE id = :id")
+    suspend fun deleteSavedActivity(id: String): Int
     @Query("UPDATE fasting_events SET outcome = :outcome WHERE id = :id")
     suspend fun recordFastingOutcome(id: String, outcome: String): Int
     // Retain the last actual snapshot when correcting Changed to Done/Missed.

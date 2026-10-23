@@ -5,6 +5,4 @@
     <string name="nav_progress">Progress</string>
     <string name="nav_settings">Settings</string>
     <string name="product_philosophy">You make the plan. The app helps you follow it.</string>
-    <string name="placeholder_title">Coming next</string>
-    <string name="settings_placeholder">Your app settings will appear here.</string>
 </resources>

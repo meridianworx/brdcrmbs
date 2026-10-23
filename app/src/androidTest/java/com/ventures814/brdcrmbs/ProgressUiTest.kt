@@ -15,6 +15,7 @@ import com.ventures814.brdcrmbs.domain.*
 import com.ventures814.brdcrmbs.ui.BrdcrmbsApp
 import com.ventures814.brdcrmbs.ui.progress.*
 import com.ventures814.brdcrmbs.ui.today.TodayViewModel
+import com.ventures814.brdcrmbs.ui.settings.SettingsViewModel
 import com.ventures814.brdcrmbs.ui.week.WeekViewModel
 import com.ventures814.brdcrmbs.ui.theme.BrdcrmbsTheme
 import java.time.*
@@ -34,6 +35,7 @@ class ProgressUiTest {
         db = Room.inMemoryDatabaseBuilder(InstrumentationRegistry.getInstrumentation().targetContext, PlanningDatabase::class.java).build()
         repo = RoomPlanningRepository(db, clock)
         model = ProgressViewModel(repo, SavedStateHandle(), clock)
+        owner.viewModelStore.put("androidx.lifecycle.ViewModelProvider.DefaultKey:${SettingsViewModel::class.java.name}", SettingsViewModel(repo, SavedStateHandle()))
         owner.viewModelStore.put("androidx.lifecycle.ViewModelProvider.DefaultKey:${ProgressViewModel::class.java.name}", model)
         owner.viewModelStore.put("androidx.lifecycle.ViewModelProvider.DefaultKey:${TodayViewModel::class.java.name}", TodayViewModel(repo, SavedStateHandle(), clock))
         owner.viewModelStore.put("androidx.lifecycle.ViewModelProvider.DefaultKey:${WeekViewModel::class.java.name}", WeekViewModel(repo, SavedStateHandle(), clock))

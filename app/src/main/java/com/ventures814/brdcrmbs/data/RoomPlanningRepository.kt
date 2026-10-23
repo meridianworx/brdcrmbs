@@ -13,6 +13,18 @@ import kotlinx.coroutines.flow.map
 class RoomPlanningRepository(private val database: PlanningDatabase, private val adherenceClock: java.time.Clock? = null) : PlanningRepository {
     private val dao = database.planningDao()
 
+    override fun observeSavedMeals() = dao.observeSavedMeals().map { rows -> rows.map { it.model() } }
+    override fun observeSavedActivities() = dao.observeSavedActivities().map { rows -> rows.map { it.model() } }
+    // Library mutations target only independent template tables, never scheduled plans/history.
+    override suspend fun saveSavedMeal(meal: SavedMeal, isNew: Boolean) = database.withTransaction {
+        if (isNew) dao.insert(meal.entity()) else check(dao.updateSavedMeal(meal.entity()) == 1) { "Saved meal no longer exists" }
+    }
+    override suspend fun saveSavedActivity(activity: SavedActivity, isNew: Boolean) = database.withTransaction {
+        if (isNew) dao.insert(activity.entity()) else check(dao.updateSavedActivity(activity.entity()) == 1) { "Saved activity no longer exists" }
+    }
+    override suspend fun deleteSavedMeal(id: String) { check(dao.deleteSavedMeal(id) == 1) { "Saved meal no longer exists" } }
+    override suspend fun deleteSavedActivity(id: String) { check(dao.deleteSavedActivity(id) == 1) { "Saved activity no longer exists" } }
+
     private fun requireToday(day: AdherenceDay) {
         val clock = adherenceClock ?: java.time.Clock.systemDefaultZone()
         require(day.zone == clock.zone && day.date == LocalDate.now(clock)) { "The local day has changed. Return to Today and try again." }

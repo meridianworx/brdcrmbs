@@ -65,7 +65,7 @@ fun BrdcrmbsApp() {
                 resetToTodayRequested = resetWeekRequested, onResetHandled = { resetWeekRequested = false })
             Destination.Progress -> ProgressRoute(screenModifier, resetToTodayRequested = resetProgressRequested,
                 onResetHandled = { resetProgressRequested = false })
-            Destination.Settings -> SettingsScreen(screenModifier)
+            Destination.Settings -> SettingsScreen(screenModifier, onEditorVisible = { editorVisible = it })
         }
     }
 }
