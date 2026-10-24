@@ -1,6 +1,7 @@
 package com.ventures814.brdcrmbs.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -9,11 +10,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.ventures814.brdcrmbs.R
 import com.ventures814.brdcrmbs.domain.*
@@ -48,19 +54,11 @@ fun TodayScreen(state: TodayState, busy: Boolean, error: String?,
                 Text(fast.preset ?: "Fast", style = MaterialTheme.typography.titleMedium)
                 Text("${fast.start.atZone(fast.zone).format(format)} →\n${fast.end.atZone(fast.zone).format(format)}")
                 Secondary("${minutes / 60}h ${minutes % 60}m · ${fast.zone.id}")
-                fast.notes?.let { Secondary(it) }
                 if (fast.id == activeId) {
-                    val progress = fast.progressAt(now)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        LinearProgressIndicator(progress = { progress.fraction },
-                            modifier = Modifier.weight(1f).height(6.dp).clip(MaterialTheme.shapes.small)
-                                .semantics { contentDescription = "Fasting time progress" }.testTag("fastingProgress-${fast.id}"),
-                            color = MaterialTheme.colorScheme.primary, trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
-                        Text("${progress.percent}%", style = MaterialTheme.typography.titleMedium, modifier = Modifier.testTag("fastingPercent-${fast.id}"))
-                    }
-                    Text("${remainingFastingTime(progress.remaining)} remaining", modifier = Modifier.testTag("fastingRemaining-${fast.id}"))
-                    Secondary(fast.endTimeLabel(now))
-                } else if (fast.outcome == FastingOutcome.PLANNED && now >= fast.end) {
+                    ActiveFastingProgress(fast, now)
+                }
+                fast.notes?.let { Secondary(it) }
+                if (fast.outcome == FastingOutcome.PLANNED && now >= fast.end) {
                     Secondary("Planned time complete · 100%")
                 }
                 OutcomeControls("fast-${fast.id}", fast.outcome.name, false, busy,
@@ -99,6 +97,33 @@ fun TodayScreen(state: TodayState, busy: Boolean, error: String?,
                 HorizontalDivider()
             } }
         }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable private fun ActiveFastingProgress(fast: FastingEvent, now: Instant) {
+    val progress = fast.progressAt(now)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+        LinearProgressIndicator(progress = { progress.fraction },
+            modifier = Modifier.weight(1f).height(12.dp).clip(MaterialTheme.shapes.small)
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+                .semantics { contentDescription = "Fasting time progress" }.testTag("fastingProgress-${fast.id}"),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = Color.Transparent,
+            strokeCap = StrokeCap.Round, gapSize = 0.dp, drawStopIndicator = {})
+        Text("${progress.percent}%", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary, modifier = Modifier.testTag("fastingPercent-${fast.id}"))
+    }
+    // Natural text widths determine whether the end label shares this row or wraps below.
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.spacedBy(4.dp), itemVerticalAlignment = Alignment.CenterVertically) {
+        Text(buildAnnotatedString {
+            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(remainingFastingTime(progress.remaining)) }
+            append(" remaining")
+        }, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(end = 16.dp).testTag("fastingRemaining-${fast.id}"))
+        Text(fast.endTimeLabel(now), style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("fastingEnd-${fast.id}"))
     }
 }
 
