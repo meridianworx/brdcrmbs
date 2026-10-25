@@ -49,6 +49,25 @@ class FastingUiTest {
         compose.waitUntil(10_000) { model.editor.value != null && !model.editorLoading.value }
     }
 
+    @Test fun overlappingAndNoFastSavesShowValidationAndKeepDraftAndSavedPlan() {
+        add(); save()
+        val original = runBlocking { repository.load(testRange, testZone).fasting.single() }
+        add()
+        compose.onNodeWithText("Save").performScrollTo().performClick()
+        compose.waitUntil(15_000) { !model.editorBusy.value && model.editorError.value != null }
+        compose.onNodeWithText("This fast overlaps an existing fast.").performScrollTo().assertIsDisplayed()
+        assertNotNull(model.editor.value)
+        compose.onNodeWithText("No fast").performScrollTo().performClick()
+        compose.onNodeWithText("Save").performScrollTo().performClick()
+        compose.waitUntil(15_000) { !model.editorBusy.value && model.editorError.value == "A fasting plan already applies to this day." }
+        compose.onNodeWithText("A fasting plan already applies to this day.").performScrollTo().assertIsDisplayed()
+        assertNotNull(model.editor.value)
+        runBlocking {
+            assertEquals(listOf(original), repository.load(testRange, testZone).fasting)
+            assertTrue(repository.load(testRange, testZone).noFast.isEmpty())
+        }
+    }
+
     @Test fun backDoesNotSaveThenAddEditAndConfirmedDeleteReturnToWeek() {
         add()
         compose.onNodeWithText("Add Fast").assertIsDisplayed()

@@ -40,7 +40,7 @@ class TodayAdherenceTest {
         val start = day.minusDays(1).atTime(19, 0).atZone(testZone).toInstant()
         val cross = FastingEvent(start = start, end = start.plus(Duration.ofHours(16)), zone = testZone)
         val multi = FastingEvent(start = start, end = start.plus(Duration.ofHours(72)), zone = testZone)
-        repo.addFasting(cross); repo.addFasting(multi); repo.addFastingPlan(NoFastPlan(date = day, zone = testZone))
+        database.insertHistoricalFasting(cross); database.insertHistoricalFasting(multi); database.insertHistoricalFasting(NoFastPlan(date = day, zone = testZone))
         val model = TodayViewModel(repo, SavedStateHandle(), clock); store.put("today", model)
         val loaded = withTimeout(10_000) { model.state.first { !it.loading } }
         assertEquals(today, loaded.day); assertEquals(listOf("Today"), loaded.plans.meals.map { it.text })
@@ -56,7 +56,7 @@ class TodayAdherenceTest {
         for (hours in listOf(16L, 24L, 48L, 72L, 211L)) {
             val start = day.atTime(19, 0).atZone(testZone).toInstant()
             val fast = FastingEvent(start = start, end = start.plus(Duration.ofHours(hours)), zone = testZone, preset = "Custom", notes = "Keep")
-            repo.addFasting(fast)
+            database.insertHistoricalFasting(fast)
             for (outcome in listOf(FastingOutcome.DONE, FastingOutcome.MISSED, FastingOutcome.DONE)) {
                 repo.recordTodayFasting(fast.id, outcome, today)
                 assertEquals(fast.copy(outcome = outcome), repo.getFastingPlan(fast.id))

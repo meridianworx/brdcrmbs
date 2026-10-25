@@ -13,6 +13,24 @@ import kotlinx.coroutines.flow.map
 class RoomPlanningRepository(private val database: PlanningDatabase, private val adherenceClock: java.time.Clock? = null) : PlanningRepository {
     private val dao = database.planningDao()
 
+    // Called only within the same Room transaction as the write, including shortcut batches.
+    private suspend fun conflict(plan: FastingPlan, excludeId: String? = null): String? {
+        val events = when (plan) {
+            is FastingEvent -> dao.fasting(plan.start.toEpochMilli(), plan.end.toEpochMilli())
+            is NoFastPlan -> dao.allFasting() // Each event owns its calendar dates in its stored zone.
+        }.map { it.model() }
+        val noFast = if (plan is FastingEvent) {
+            val first = plan.start.atZone(plan.zone).toLocalDate()
+            val last = plan.end.minusMillis(1).atZone(plan.zone).toLocalDate()
+            dao.noFast(first.toEpochDay(), last.plusDays(1).toEpochDay()).map { it.model() }
+        } else emptyList()
+        return fastingConflict(plan, events, noFast, excludeId)
+    }
+
+    private suspend fun validate(plan: FastingPlan, excludeId: String? = null) {
+        conflict(plan, excludeId)?.let { throw FastingConflictException(it) }
+    }
+
     override fun observeReminderPlans(): Flow<PlanningData> =
         database.invalidationTracker.createFlow("fasting_events", "meal_plans", "activity_plans")
             .map { database.withTransaction {
@@ -90,6 +108,7 @@ class RoomPlanningRepository(private val database: PlanningDatabase, private val
 
     private suspend fun insertCopies(batches: List<PlanningData>): CopyResult {
         var added = 0
+        var conflicts = 0
         val fastingKeys = mutableSetOf<FastingEvent>()
         val mealKeys = mutableSetOf<MealPlan>()
         val activityKeys = mutableSetOf<ActivityPlan>()
@@ -99,7 +118,10 @@ class RoomPlanningRepository(private val database: PlanningDatabase, private val
                 // Query its exact instant range, including events starting outside destination dates.
                 fastingKeys.addAll(dao.fasting(event.start.toEpochMilli(), event.end.toEpochMilli())
                     .map { it.model() }.filter { it.outcome == FastingOutcome.PLANNED }.map { it.copyKey() })
-                if (fastingKeys.add(event.copyKey())) { dao.insert(event.entity()); added++ }
+                if (event.copyKey() !in fastingKeys) {
+                    if (conflict(event) != null) conflicts++
+                    else { addFastingPlan(event); fastingKeys.add(event.copyKey()); added++ }
+                }
             }
             for (meal in batch.meals) {
                 mealKeys.addAll(dao.meals(meal.date.toEpochDay(), meal.date.plusDays(1).toEpochDay())
@@ -113,10 +135,13 @@ class RoomPlanningRepository(private val database: PlanningDatabase, private val
             }
             for (plan in batch.noFast) {
                 noFastKeys.addAll(dao.noFast(plan.date.toEpochDay(), plan.date.plusDays(1).toEpochDay()).map { it.model().copyKey() })
-                if (noFastKeys.add(plan.copyKey())) { dao.insert(plan.entity()); added++ }
+                if (plan.copyKey() !in noFastKeys) {
+                    if (conflict(plan) != null) conflicts++
+                    else { addFastingPlan(plan); noFastKeys.add(plan.copyKey()); added++ }
+                }
             }
         }
-        return CopyResult(added, batches.sumOf { it.recordCount } - added)
+        return CopyResult(added, batches.sumOf { it.recordCount } - added - conflicts, conflicts)
     }
 
     override fun observe(range: DateRange, zone: ZoneId): Flow<PlanningData> =
@@ -139,6 +164,7 @@ class RoomPlanningRepository(private val database: PlanningDatabase, private val
     }
 
     override suspend fun addFastingPlan(plan: FastingPlan) = database.withTransaction {
+        validate(plan)
         when (plan) {
             is FastingEvent -> { check(dao.noFastById(plan.id) == null); dao.insert(plan.entity()) }
             is NoFastPlan -> { check(dao.fastingById(plan.id) == null); dao.insert(plan.entity()) }
@@ -149,6 +175,7 @@ class RoomPlanningRepository(private val database: PlanningDatabase, private val
         val existing = checkNotNull(getFastingPlan(plan.id)) { "Plan no longer exists" }
         check(existing !is FastingEvent || existing.outcome == FastingOutcome.PLANNED) { "Recorded outcomes cannot be edited" }
         check(plan !is FastingEvent || plan.outcome == FastingOutcome.PLANNED)
+        validate(plan, excludeId = plan.id)
         when {
             existing is FastingEvent && plan is FastingEvent -> check(dao.updateFasting(plan.id, plan.start.toEpochMilli(), plan.end.toEpochMilli(), plan.zone.id, plan.preset, plan.notes) == 1)
             existing is NoFastPlan && plan is NoFastPlan -> check(dao.update(plan.entity()) == 1)

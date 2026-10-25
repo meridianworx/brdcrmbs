@@ -57,7 +57,7 @@ class PlanningPersistenceTest {
         val start = testDate.atTime(19, 0).atZone(testZone).toInstant()
         for (hours in listOf(2L, 16L, 24L, 36L, 48L, 72L, 240L)) {
             val event = FastingEvent(id = "fast-$hours", start = start, end = start.plus(Duration.ofHours(hours)), zone = testZone, notes = "One event")
-            repository.addFasting(event)
+            database.insertHistoricalFasting(event)
             val wideRange = DateRange(testDate.minusDays(1), testDate.plusDays(12))
             assertEquals(listOf(event), repository.load(wideRange, testZone).fasting.filter { it.id == event.id })
             var day = testDate
@@ -124,7 +124,7 @@ class PlanningPersistenceTest {
 
     @Test fun everyOutcomeRoundTripsAndMissedActivityCanRemainLinked() = runBlocking {
         MealOutcome.entries.forEach { outcome -> repository.addMeal(MealPlan(id = outcome.name, date = testDate, text = "Planned", outcome = outcome, actual = if (outcome == MealOutcome.CHANGED) ActualMeal("Actual") else null)) }
-        FastingOutcome.entries.forEach { outcome -> repository.addFasting(FastingEvent(id = outcome.name, start = testRange.startInstant(testZone), end = testRange.endInstant(testZone), zone = testZone, outcome = outcome)) }
+        FastingOutcome.entries.forEach { outcome -> database.insertHistoricalFasting(FastingEvent(id = outcome.name, start = testRange.startInstant(testZone), end = testRange.endInstant(testZone), zone = testZone, outcome = outcome)) }
         ActivityOutcome.entries.forEach { outcome -> repository.addActivity(ActivityPlan(id = outcome.name, date = testDate, name = "Activity", outcome = outcome)) }
         repository.addActivity(ActivityPlan(id = "new", date = testDate.plusDays(1), name = "Later plan", rescheduledFromId = "MISSED"))
         val loaded = repository.load(testRange, testZone)

@@ -95,7 +95,8 @@ class PlanningMigrationTest {
             val planned = MealPlan(date = java.time.LocalDate.ofEpochDay(0), text = "Reusable")
             repo.savePlannedMeal(planned, isNew = true, saveForReuse = true)
             assertEquals("Reusable", repo.savedMeals().single { it.text == "Reusable" }.text)
-            repo.addFastingPlan(NoFastPlan(date = java.time.LocalDate.ofEpochDay(0), zone = java.time.ZoneOffset.UTC))
+            assertTrue(runCatching { repo.addFastingPlan(NoFastPlan(date = java.time.LocalDate.ofEpochDay(0), zone = java.time.ZoneOffset.UTC)) }.exceptionOrNull() is FastingConflictException)
+            database.insertHistoricalFasting(NoFastPlan(date = java.time.LocalDate.ofEpochDay(0), zone = java.time.ZoneOffset.UTC))
             assertEquals(if (version == 1) 1 else 2, repo.load(DateRange.day(java.time.LocalDate.ofEpochDay(0)), java.time.ZoneOffset.UTC).noFast.size)
         } finally { database.close(); instrumentation.targetContext.deleteDatabase(name) }
     }

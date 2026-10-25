@@ -50,6 +50,7 @@ class TodayFastingProgressUiTest {
         return FastingEvent(id, start, start.plus(Duration.ofHours(hours)), planningZone, if (hours == 16L) "16:8" else "${hours}h", "Keep schedule and notes", outcome)
     }
     private fun add(vararg events: FastingEvent) = runBlocking { events.forEach { repo.addFasting(it) } }
+    private fun addHistorical(vararg events: FastingEvent) = runBlocking { events.forEach { database.insertHistoricalFasting(it) } }
     private fun show() {
         compose.setContent { BrdcrmbsTheme { CompositionLocalProvider(LocalViewModelStoreOwner provides owner) { BrdcrmbsApp() } } }
         compose.waitUntil(15_000) { !model.state.value.loading && ticks.subscriptionCount.value == 1 }
@@ -107,8 +108,8 @@ class TodayFastingProgressUiTest {
     }
 
     @Test fun resolvedAndNoFastNeverGetLiveTreatment() {
-        add(fast(outcome = FastingOutcome.MISSED), fast(id = "done", outcome = FastingOutcome.DONE))
-        runBlocking { repo.addFastingPlan(NoFastPlan(date = day, zone = planningZone, notes = "Intentional")) }
+        addHistorical(fast(outcome = FastingOutcome.MISSED), fast(id = "done", outcome = FastingOutcome.DONE))
+        runBlocking { database.insertHistoricalFasting(NoFastPlan(date = day, zone = planningZone, notes = "Intentional")) }
         show(); bar().assertDoesNotExist(); bar("done").assertDoesNotExist()
         compose.onNodeWithTag("status-fast-fast").assertTextEquals("✕ Missed")
         compose.onNodeWithTag("status-fast-done").assertTextEquals("✓ Done")
@@ -128,7 +129,7 @@ class TodayFastingProgressUiTest {
     }
 
     @Test fun overlappingVisibleRecordsHaveOnlyOneLiveBar() {
-        add(fast(id = "older"), fast(elapsed = 8, id = "latest"), fast(elapsed = -2, id = "future"), fast(hours = 4, elapsed = 6, id = "ended"))
+        addHistorical(fast(id = "older"), fast(elapsed = 8, id = "latest"), fast(elapsed = -2, id = "future"), fast(hours = 4, elapsed = 6, id = "ended"))
         show()
         bar("latest").assertExists(); bar("older").assertDoesNotExist(); bar("future").assertDoesNotExist(); bar("ended").assertDoesNotExist()
         assertEquals(4, model.state.value.plans.fasting.size)

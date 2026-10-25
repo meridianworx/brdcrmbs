@@ -3,7 +3,11 @@ package com.ventures814.brdcrmbs.domain
 import java.time.Duration
 import java.util.UUID
 
-data class CopyResult(val added: Int, val skipped: Int)
+data class CopyResult(val added: Int, val skipped: Int, val fastingConflicts: Int = 0) {
+    fun feedback(): String = if (added == 0 && skipped == 0 && fastingConflicts == 0) "Nothing to copy. No plans were added."
+        else "Added $added planned items; skipped $skipped identical Planned items." +
+            if (fastingConflicts > 0) " Skipped $fastingConflicts fasting conflict${if (fastingConflicts == 1) "" else "s"}." else ""
+}
 
 /** Shift original planning fields only; historical outcomes, actuals and linkage stay at the source. */
 fun PlanningData.shiftedPlans(days: Long): PlanningData = PlanningData(

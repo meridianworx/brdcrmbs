@@ -85,8 +85,7 @@ class WeekViewModel(
                 val result = if (request.mode == Shortcut.REPEAT_WEEK) repository.repeatLastWeek(request.weekStart, zone)
                     else repository.copyDay(request.source, request.destinations, zone)
                 if (resultContext == feedbackContext) {
-                    copyMessage.value = if (result.added == 0 && result.skipped == 0) "Nothing to copy. No plans were added."
-                        else "Added ${result.added} planned items; skipped ${result.skipped} identical Planned items."
+                    copyMessage.value = result.feedback()
                 }
                 savedState["planningShortcut"] = null
             } catch (e: CancellationException) { throw e
@@ -320,6 +319,7 @@ class WeekViewModel(
                 savedState["fastDraft"] = null
                 editorError.value = null
             } catch (e: CancellationException) { throw e
+            } catch (e: com.ventures814.brdcrmbs.domain.FastingConflictException) { editorError.value = e.message
             } catch (_: Exception) { editorError.value = "Could not save the plan. Your entries are retained; please try again."
             } finally { editorBusy.value = false }
         }

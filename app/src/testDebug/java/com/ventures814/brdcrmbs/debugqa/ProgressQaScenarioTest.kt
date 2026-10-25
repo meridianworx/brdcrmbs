@@ -6,6 +6,21 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ProgressQaScenarioTest {
+    @Test fun canonicalAndAdjacentWeeksHaveNoFastingOrNoFastConflictsIncludingDst() {
+        for (monday in listOf(LocalDate.of(2026, 10, 19), LocalDate.of(2026, 3, 2), LocalDate.of(2026, 10, 26))) {
+            val current = QaWeek(monday, ZoneId.of("America/Denver"))
+            val first = progressQaScenario(current)
+            val next = progressQaScenario(current.copy(monday = monday.plusWeeks(1)))
+            val events = first.fasting + next.fasting
+            val none = first.noFast + next.noFast
+            events.forEach { assertNull(fastingConflict(it, events, none, it.id)) }
+            none.forEach { assertNull(fastingConflict(it, events, none, it.id)) }
+            assertTrue(first.fasting.any { it.outcome == FastingOutcome.DONE })
+            assertTrue(first.fasting.any { it.outcome == FastingOutcome.MISSED })
+            assertTrue(first.fasting.any { it.outcome == FastingOutcome.PLANNED })
+            assertEquals(1, first.fasting.count { Duration.between(it.start, it.end).toHours() == 48L })
+        }
+    }
     private val week = QaWeek(LocalDate.of(2026, 10, 19), ZoneId.of("America/Denver"))
     @Test fun canonicalScenarioPreservesOutcomesAndActualSnapshot() {
         val data = progressQaScenario(week)
@@ -37,9 +52,9 @@ class ProgressQaScenarioTest {
         assertEquals(AdherenceSummary(6, 8), review.meals)
         assertEquals(AdherenceSummary(4, 5), review.activity)
         fun day(offset: Long) = review.days.single { it.date == week.monday.plusDays(offset) }
-        assertEquals(ReviewStatus.SUCCESS, day(1).fasting) // Monday's continuous Done event overlaps No fast.
+        assertEquals(ReviewStatus.NONE, day(1).fasting) // Intentional No fast has no contradictory event.
         assertEquals(ReviewStatus.CHANGED, day(1).meals)
-        assertEquals(ReviewStatus.MISSED, day(5).fasting) // Friday's Missed event overlaps Saturday.
+        assertEquals(ReviewStatus.MISSED, day(5).fasting) // Adjacent Friday miss ends before Saturday fast starts.
         assertEquals(ReviewStatus.PLANNED, day(6).fasting)
         assertEquals(ReviewStatus.NONE, day(6).meals)
         assertEquals(ReviewStatus.NONE, day(6).activity)
@@ -61,7 +76,7 @@ class ProgressQaScenarioTest {
             val fast = scenario.fasting.single { it.preset == "48h" }
             assertEquals(48, Duration.between(fast.start, fast.end).toHours().toInt())
             assertEquals(monday.plusDays(7), fast.end.atZone(week.zone).toLocalDate())
-            assertEquals(19, fast.start.atZone(week.zone).hour)
+            assertEquals(7, fast.start.atZone(week.zone).hour)
         }
     }
 }

@@ -40,7 +40,7 @@ class SavedLibraryTest {
         repo.addActivity(scheduledActivity.copy(outcome = ActivityOutcome.MISSED))
         repo.addActivity(scheduledActivity.copy(id = "rescheduled", date = testDate.plusDays(1), rescheduledFromId = scheduledActivity.id))
         val fast = FastingEvent(start = testDate.atTime(19, 0).atZone(testZone).toInstant(), end = testDate.plusDays(2).atTime(19, 0).atZone(testZone).toInstant(), zone = testZone, outcome = FastingOutcome.DONE)
-        repo.addFasting(fast); repo.addFastingPlan(NoFastPlan(date = testDate, zone = testZone))
+        repo.addFasting(fast); db.insertHistoricalFasting(NoFastPlan(date = testDate, zone = testZone))
         val history = repo.load(testRange, testZone)
         val editedMeal = meal.copy(text = "Chicken + broccoli", label = null, notes = "New reusable note")
         val editedActivity = activity.copy(name = "Mobility", type = ActivityType.ACTIVITY, notes = null)

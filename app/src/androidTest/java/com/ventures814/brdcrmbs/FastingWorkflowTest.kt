@@ -35,7 +35,7 @@ class FastingWorkflowTest {
 
     @Test fun addReloadEditWithoutDuplicateAndDeleteOnlySelectedRecord() = runBlocking {
         val first = FastingDraft.new(testDate, testZone).toPlan() as FastingEvent
-        val other = first.copy(id = "other")
+        val other = first.copy(id = "other", start = first.start.plus(Duration.ofDays(3)), end = first.end.plus(Duration.ofDays(3)))
         repository.addFastingPlan(first); repository.addFastingPlan(other)
         database.close(); open()
         assertEquals(first, repository.getFastingPlan(first.id))

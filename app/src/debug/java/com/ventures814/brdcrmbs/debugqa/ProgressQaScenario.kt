@@ -41,11 +41,11 @@ fun progressQaScenario(week: QaWeek): PlanningData {
         ActivityPlan(id(slot), date(offset), LocalTime.of(hour, 0), text, type, "Progress QA · $slot", outcome)
     return PlanningData(
         fasting = listOf(
-            fast("fast-mon", 0, 19, 16, "16:8", FastingOutcome.DONE),
+            fast("fast-mon", 0, 8, 16, "16:8", FastingOutcome.DONE),
             fast("fast-wed", 2, 18, 18, "18:6", FastingOutcome.DONE),
-            fast("fast-thu", 3, 19, 16, "16:8", FastingOutcome.PLANNED),
-            fast("fast-fri", 4, 19, 24, "24h", FastingOutcome.MISSED),
-            fast("fast-sat", 5, 19, 48, "48h", FastingOutcome.PLANNED)),
+            fast("fast-thu", 3, 15, 16, "16:8", FastingOutcome.PLANNED),
+            fast("fast-fri", 4, 7, 24, "24h", FastingOutcome.MISSED),
+            fast("fast-sat", 5, 7, 48, "48h", FastingOutcome.PLANNED)),
         noFast = listOf(NoFastPlan(id("no-fast-tue"), date(1), week.zone, "Progress QA · intentional No fast")),
         meals = listOf(
             meal("meal-mon-1", 0, 8, 0, "Eggs + avocado", "Breakfast", MealOutcome.DONE),

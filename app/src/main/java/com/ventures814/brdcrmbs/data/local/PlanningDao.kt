@@ -7,6 +7,8 @@ import androidx.room.Update
 
 @Dao
 interface PlanningDao {
+    @Query("SELECT * FROM fasting_events")
+    suspend fun allFasting(): List<FastingEntity>
     @Query("SELECT * FROM fasting_events WHERE outcome = 'PLANNED'")
     suspend fun reminderFasting(): List<FastingEntity>
     @Query("SELECT * FROM meal_plans WHERE outcome = 'PLANNED' AND timeNanoOfDay IS NOT NULL")

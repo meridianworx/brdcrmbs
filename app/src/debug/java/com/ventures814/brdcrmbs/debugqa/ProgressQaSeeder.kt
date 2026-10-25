@@ -5,6 +5,13 @@ import com.ventures814.brdcrmbs.data.RoomPlanningRepository
 import com.ventures814.brdcrmbs.data.local.PlanningDatabase
 import java.time.Clock
 import java.time.LocalDate
+import java.time.Duration
+import com.ventures814.brdcrmbs.domain.*
+
+/** Exact reserved identity, separate from the canonical Progress week scenario. */
+object ActiveFastQaOwnership {
+    const val ID = "brdcrmbs-debug-active-fast-v1"
+}
 
 /** Debug-only transactional owner of QA records. Production CRUD/history guards stay unchanged. */
 class ProgressQaSeeder(private val database: PlanningDatabase, private val clock: Clock? = null) {
@@ -22,7 +29,21 @@ class ProgressQaSeeder(private val database: PlanningDatabase, private val clock
     }
 
     /** All weeks owned by this seeder, never a date-range delete or whole-database reset. */
-    suspend fun reset() = database.withTransaction { removeOwned(null) }
+    suspend fun reset() = database.withTransaction { removeOwned(null); removeActive() }
+
+    suspend fun seedActiveFast() = database.withTransaction {
+        val current = clock ?: Clock.systemDefaultZone()
+        val now = java.time.Instant.ofEpochMilli(current.millis())
+        removeActive()
+        repository.addFasting(FastingEvent(id = ActiveFastQaOwnership.ID,
+            start = now.minus(Duration.ofHours(10)), end = now.plus(Duration.ofHours(6)),
+            zone = current.zone, preset = "16:8", notes = "Active Fast QA"))
+    }
+
+    private fun removeActive() {
+        database.openHelper.writableDatabase.execSQL("DELETE FROM fasting_events WHERE id = ?", arrayOf(ActiveFastQaOwnership.ID))
+        database.openHelper.writableDatabase.execSQL("DELETE FROM no_fast_plans WHERE id = ?", arrayOf(ActiveFastQaOwnership.ID))
+    }
 
     private fun removeOwned(week: LocalDate?) {
         val sqlite = database.openHelper.writableDatabase
