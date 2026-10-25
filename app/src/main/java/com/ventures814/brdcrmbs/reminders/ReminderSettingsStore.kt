@@ -16,6 +16,13 @@ class ReminderSettingsStore(context: Context, name: String = "reminder_preferenc
     private val mutable = MutableStateFlow(read())
     val state = mutable.asStateFlow()
     val asked: Boolean get() = permission.getBoolean("permissionAsked", false)
+    /** Restore the four user choices only; permission and runtime state stay device-local. */
+    suspend fun replaceForRestore(value: ReminderPreferences) = withContext(Dispatchers.IO) {
+        val edit = prefs.edit()
+        ReminderType.entries.forEach { edit.putBoolean(it.name, it in value.enabled) }
+        check(edit.commit()) { "Could not restore reminder preferences" }
+        mutable.value = read()
+    }
     suspend fun markAsked() = withContext(Dispatchers.IO) { check(permission.edit().putBoolean("permissionAsked", true).commit()) }
     suspend fun set(type: ReminderType, on: Boolean) = withContext(Dispatchers.IO) {
         check(prefs.edit().putBoolean(type.name, on).commit()) { "Could not save reminder preference" }

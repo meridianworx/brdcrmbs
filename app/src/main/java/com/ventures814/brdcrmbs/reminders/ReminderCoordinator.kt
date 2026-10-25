@@ -19,6 +19,14 @@ class ReminderCoordinator(
     private val reconciler = ReminderReconciler(backend)
     val error = MutableStateFlow<String?>(null)
     val pending = MutableStateFlow<List<PlanReminder>>(emptyList())
+    /** Backup replacement shares delivery/reconciliation serialization without changing timing policy. */
+    suspend fun withRestoreBoundary(action: suspend () -> Unit) = mutex.withLock { action() }
+    /** No delivery/observer can interleave replacement and its future-only reconciliation. */
+    suspend fun restoreAndReconcile(action: suspend () -> Unit): Boolean = mutex.withLock {
+        action()
+        runCatching { reconcileLocked(recovery = true) }
+            .onFailure { error.value = "Could not synchronize reminders. Open Reminders to retry." }.isSuccess
+    }
     fun start() {
         scope.launch {
             combine(repository.observeReminderPlans(), settings.state) { _, _ -> Unit }
@@ -28,6 +36,9 @@ class ReminderCoordinator(
         }
     }
     suspend fun reconcile(recovery: Boolean = false) = mutex.withLock {
+        reconcileLocked(recovery)
+    }
+    private suspend fun reconcileLocked(recovery: Boolean) {
         val current = clock()
         val eligible = ReminderPolicy.eligible(repository.observeReminderPlans().first(), settings.state.value, current.zone)
         reconciler.sync(eligible, current.instant(), allowed(), recovery)

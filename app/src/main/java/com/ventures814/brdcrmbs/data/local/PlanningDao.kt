@@ -7,6 +7,15 @@ import androidx.room.Update
 
 @Dao
 interface PlanningDao {
+    @Query("SELECT * FROM no_fast_plans") suspend fun backupNoFast(): List<NoFastEntity>
+    @Query("SELECT * FROM meal_plans") suspend fun backupMeals(): List<MealEntity>
+    @Query("SELECT * FROM activity_plans") suspend fun backupActivities(): List<ActivityEntity>
+    @Query("DELETE FROM activity_plans") suspend fun restoreClearActivities()
+    @Query("DELETE FROM meal_plans") suspend fun restoreClearMeals()
+    @Query("DELETE FROM fasting_events") suspend fun restoreClearFasting()
+    @Query("DELETE FROM no_fast_plans") suspend fun restoreClearNoFast()
+    @Query("DELETE FROM saved_meals") suspend fun restoreClearSavedMeals()
+    @Query("DELETE FROM saved_activities") suspend fun restoreClearSavedActivities()
     @Query("SELECT * FROM fasting_events")
     suspend fun allFasting(): List<FastingEntity>
     @Query("SELECT * FROM fasting_events WHERE outcome = 'PLANNED'")

@@ -1,0 +1,46 @@
+package com.ventures814.brdcrmbs.data
+
+import androidx.room.withTransaction
+import com.ventures814.brdcrmbs.backup.*
+import com.ventures814.brdcrmbs.data.local.*
+import com.ventures814.brdcrmbs.domain.PlanningData
+import com.ventures814.brdcrmbs.reminders.ReminderSettingsStore
+import java.time.Instant
+
+/** Dedicated whole-history boundary; ordinary planning writes retain their locked validation. */
+class RoomBackupStore(private val database: PlanningDatabase, private val settings: ReminderSettingsStore) {
+    private val dao = database.planningDao()
+    suspend fun snapshot(at: Instant, excludeQa: Boolean = true): BackupSnapshot = database.withTransaction {
+        fun keep(id: String) = !excludeQa || !isBackupQaOwned(id)
+        BackupSnapshot(at, PlanningData(
+            dao.allFasting().map { it.model() }.filter { keep(it.id) },
+            dao.backupMeals().filter { keep(it.id) }.map {
+                require(it.actualText != null || (it.actualTimeNanoOfDay == null && it.actualLabel == null && it.actualNotes == null)) {
+                    "Incomplete stored actual-meal details cannot be exported safely."
+                }
+                it.model()
+            },
+            dao.backupActivities().map { it.model() }.filter { keep(it.id) },
+            dao.backupNoFast().map { it.model() }.filter { keep(it.id) }
+        ), dao.savedMeals().map { it.model() }, dao.savedActivities().map { it.model() }, settings.state.value).validate()
+        // A genuine activity referencing an excluded QA parent rejects export, never loses its history.
+    }
+
+    suspend fun replace(snapshot: BackupSnapshot) = database.withTransaction {
+        snapshot.validate()
+        dao.restoreClearActivities(); dao.restoreClearMeals(); dao.restoreClearFasting(); dao.restoreClearNoFast()
+        dao.restoreClearSavedMeals(); dao.restoreClearSavedActivities()
+        snapshot.plans.fasting.forEach { dao.insert(it.entity()) }
+        snapshot.plans.noFast.forEach { dao.insert(it.entity()) }
+        snapshot.plans.meals.forEach { dao.insert(it.entity()) }
+        snapshot.activitiesInInsertionOrder().forEach { dao.insert(it.entity()) }
+        snapshot.savedMeals.forEach { dao.insert(it.entity()) }
+        snapshot.savedActivities.forEach { dao.insert(it.entity()) }
+        settings.replaceForRestore(snapshot.reminders)
+        // Detect deferred constraints while Room can still roll back normally. Android SQLite can
+        // leave a native transaction open when a deferred FK fails during endTransaction/COMMIT.
+        database.openHelper.writableDatabase.query("PRAGMA foreign_key_check").use {
+            check(!it.moveToFirst()) { "Restored activity history contains an invalid relationship." }
+        }
+    }
+}
