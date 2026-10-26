@@ -9,7 +9,7 @@
 - **Package name:** com.ventures814.brdcrmbs (namespace and application ID)
 - **Platform:** Android
 - **Repository:** https://github.com/meridianworx/brdcrmbs.git (origin; primary branch main)
-- **Development stage:** Week, Today adherence, Progress, Settings foundation, saved libraries, Reminders, fasting plan integrity and Today active-fasting progress presentation are physically accepted/LOCKED. Backup & Restore is implemented and validated, pending Product Owner physical-device acceptance. Overall Settings is not complete.
+- **Development stage:** Week, Today adherence, Progress, Settings foundation, saved libraries, Reminders, fasting plan integrity, Today active-fasting progress presentation and Backup & Restore are physically accepted/LOCKED. Approved launcher-icon installation is the current narrow milestone. Overall Settings is not complete.
 
 # Purpose
 
@@ -218,7 +218,7 @@ Android foundation implemented:
 
 ## In Progress
 
-- Backup & Restore Product Owner physical-device acceptance. Implementation, automated validation and native emulator review are complete. Fasting integrity and Today active-fasting progress presentation passed Product Owner physical-device testing and are now LOCKED; earlier pending notes are historical.
+- Installed launcher-icon Product Owner physical-device acceptance. Implementation and emulator validation are complete; the icon is not LOCKED. Backup & Restore passed Product Owner physical-device testing ("looks good") and is now APPROVED / ACCEPTED / LOCKED; earlier pending notes are historical.
 
 ## Planned
 
@@ -375,6 +375,8 @@ Do not add measurement/unit settings unless an implemented feature actually need
 
 # Locked Decisions
 
+- Product Owner physically tested Backup & Restore and said "looks good" (2026-10-25). Backup & Restore is APPROVED / ACCEPTED / LOCKED. Preserve its user-controlled SAF flows, portable format, data scope, validated/confirmed replace policy, atomic recovery, history preservation and reminder reconciliation. The launcher-icon task changes no backup production implementation.
+
 - Product Owner physically tested and APPROVED fasting plan integrity and Today active-fasting progress presentation (2026-10-25). Both implementations are now LOCKED. Preserve the authoritative repository/domain overlap and No Fast rules, historical-data policy, shortcut conflict/duplicate distinction, and the currently approved Today presentation. Progress remains derived from persisted continuous-event instants, with prominent green bar/percentage, emphasized remaining duration and contextual end time. Planned/Done/Missed remain user controlled; reaching 100% never automatically records adherence. No Fast, upcoming, completed-unresolved and resolved behavior remain as implemented. Earlier pending-acceptance notes below describe prior checkpoints only.
 
 ## Fasting Integrity
@@ -423,6 +425,8 @@ The following have Product Owner approval and must not be changed casually:
 
 # Approved UI / UX
 
+Launcher-icon artwork source of truth: docs/design/brdcrmbs-launcher-icon-approved.png (SHA-256 21AE691CE1A8551D5B5DAA9BF8A650D10B9F16BB21B15813E92648A0440FA3A4). Preserve its four green breadcrumb/path stones, relative hierarchy and charcoal identity without text or redesign. The artwork is approved; installed launcher-icon physical-device acceptance remains pending.
+
 Approved baseline visual direction:
 - Dark charcoal / near-black interface
 - Bright green accent
@@ -458,7 +462,7 @@ Today active fasting visual source of truth: docs/design/today-active-fasting-ap
 # Known Issues
 
 - Week, Today adherence and corrected Progress passed physical-device Product Owner acceptance and are approved/locked. That historical populated Progress review included mixed statuses, meal fractions, full Day Detail and legacy overlapping fasting. New fasting writes now follow the locked integrity rule; existing historical records remain readable. Earlier visual divergence is resolved; the approved reference remains at docs/design/progress-approved-screen-3.png.
-- Backup & Restore physical-device Product Owner acceptance remains pending.
+- Installed launcher-icon physical-device Product Owner acceptance remains pending. Backup & Restore is accepted/LOCKED; earlier pending backup notes are historical.
 
 # Backlog
 
@@ -472,7 +476,7 @@ Future health measurements must not automatically control the user's plan.
 
 # Current Development Focus
 
-Product Owner physical-device testing of Settings → Backup & Restore. Implementation and automated/emulator validation are complete; acceptance remains pending until tested. Preserve physically accepted/LOCKED fasting integrity, Today fasting progress, Week, Today adherence, Progress, Settings/libraries and Reminders. App Preferences, Data Management and About remain future milestones; do not begin them without a separate request.
+Await Product Owner physical-device acceptance of the installed Android launcher icon. Implementation and emulator validation are complete; the icon remains pending, not LOCKED. Preserve all locked features, including newly accepted Backup & Restore. App Preferences, Data Management and About remain future milestones; do not begin them without a separate request.
 
 Debug builds provide Settings → Developer / Testing → Progress Test Data for repeatable physical-device QA of Week, Today and Progress, plus Seed Active Fast for current-instant Today visual testing. Both scenarios use the production fasting-integrity boundary and safely reject conflicts. Reset Test Data removes only exact QA-owned records, preserving genuine plans/history and saved libraries. This is development tooling, not product Settings functionality; source-set release isolation must be preserved.
 
@@ -828,3 +832,18 @@ Debug builds provide Settings → Developer / Testing → Progress Test Data for
 - Final APK DEX inspection confirms all 12 checked QA/diagnostics class/control/ownership markers present in debug and absent from release; production backup codec/service/store/screen are present in both. Debug ownership filtering and the empty release filter are source-set implementations; no QA generator, identities or grammar enter release.
 - Manual native emulator review confirmed Settings entry, charcoal/green rounded screen and final confirmation, readable controls/privacy notice, hidden child bottom navigation, native Create Document and Open Document, suggested filename/MIME, actual valid JSON export, explicit replacement, successful restore of that same empty dataset, malformed-file feedback without confirmation/writes, cancellation and hardware Back restoring Settings/navigation. No content clipping was observed at the tested phone size; the page remains scrollable. The final dialog explicitly uses the established charcoal surface rather than Material's default tinted container. Only task-created external test files were removed; unrelated files and the physical phone were untouched.
 - Environment: preserved and recovered the recurring cold-boot System UI ANR before instrumentation. Initial native hierarchy dumps sometimes returned null during slow app/picker rendering; later clean captures and interactions succeeded without a production workaround. Gradle removed the test APK after the full suite; reinstalled the same tested APK for final visual review. Restored the task emulator to 1440x3120 / density 560 and stopped it. Reports, screenshots, APKs and release-isolation evidence remain ignored. No unresolved automated app failure remains; Backup & Restore physical-device Product Owner acceptance is still pending.
+
+## Approved Android Launcher Icon — 2026-10-25
+
+- Resumed and preserved the interrupted launcher implementation, including the generator, adaptive PNG layers, ten legacy WebPs, starter-vector removals and state edits. No reset or replacement implementation. Initial tracked main matched origin/main before this milestone; the approved artwork was supplied as an untracked milestone input. Resume inventory was 13 tracked changes plus four new files, not four total files. Reviewed the complete preserved diff and all new assets before committing.
+- Permanent approved source: docs/design/brdcrmbs-launcher-icon-approved.png, 1254×1254, SHA-256 21AE691CE1A8551D5B5DAA9BF8A650D10B9F16BB21B15813E92648A0440FA3A4. Its bytes remain unchanged. Four original green stone shapes/colors/arrangement are retained without text, tracing or redesign.
+- tools/generate_launcher_icons.py is a deterministic desktop Pillow/NumPy development utility, not an Android runtime/build dependency. It reads and hash-checks the reference, extracts its stone pixels into transparency and scales uniformly. The charcoal layer derives from the source, smoothly reconstructs only areas hidden by stones/shadows and extends its edges for adaptive motion. Generated Android assets live in res; optional review previews/checks live in ignored app/build/launcher-review.
+- Adaptive foreground/background are 432×432 PNGs in drawable-xxxhdpi (108dp layers). The foreground symbol is 51.75×48.5dp, with a measured 31.12dp radius inside the 33dp safe radius. Assertions verify no stone-alpha clipping under circle, rounded-square and squircle masks. The opaque charcoal background fills the full layer, including bleed. Existing monochrome reference reuses stone alpha; system-themed icons may use system-selected tint.
+- Existing manifest icon/roundIcon names and both mipmap-anydpi-v26 adaptive XML files were already correct and remain unchanged. Removed only the default robot/grid vectors, replacing their resource names with the new PNG layers. API 26+ uses adaptive resources; API 24/25 retains standard lossless WebP fallbacks. Normal rounded-square and round-circle fallbacks cover mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi at 48/72/96/144/192px. No application ID, SDK, dependency or Gradle configuration change.
+- Final wrapper validation passed :app:assembleDebug, :app:assembleRelease (unsigned), :app:assembleDebugAndroidTest, :app:test, :app:lintDebug and :app:lintRelease. All 81 existing JVM tests passed, 0 failures/errors/skipped. Final resource validation was rerun after the interrupted background refinement; packaged debug layer pixels match the final source resources exactly. Both lint reports contain 0 errors and the same 11 existing warnings (redundant activity label, seven unused starter colors, three dependency-update notices).
+- Existing AppShellTest and ExampleInstrumentedTest passed 2/2 on Pixel_6_Pro API 37 / Android 17, with 0 failures/skips: all four destinations, selected-tab restoration and package identity. No tests were edited or weakened. The earlier Backup & Restore milestone's full 144-test result remains historical; this icon-only change used the focused existing smoke group.
+- Installed the tested DEBUG APK and directly inspected the native launcher, including the ordinary All apps grid beside other Android apps and the predicted home slot. All four green stones are recognizable on charcoal with balanced padding, circular masking and no clipping/default robot. Tapping both real launcher entries opens Today normally; final capture shows loaded cards and the unchanged four-tab navigation. Captures: app/build/launcher-review/icon-all-apps.png, icon-drawer-final.png and icon-launch-final.png. The predicted-slot surround is launcher decoration, absent from the ordinary app icon. No alternate icon-shape overlays were available on this emulator; the additional rounded-square/squircle checks are generated previews/assertions, not claims of multiple physical/OEM launcher tests.
+- Remaining visual differences: Android supplies the outer mask instead of the reference's baked rounded-square tile/black outer corners; safe padding and uniform scaling adapt the symbol to that mask. The separately reconstructed/cropped charcoal shading is not pixel-identical to the flattened reference, and raster resampling changes edge pixels at launcher size. The four-stone visual identity and green/charcoal palette are preserved. Native themed icons may recolor the symbol according to system settings.
+- Recovered the recurring cold-boot com.android.systemui ANR after recording its dialog; no production workaround was added. Early swipe attempts did not open All apps; the native All apps key opened it and clean captures verified the ordinary icon. The initial robot seen on Home belonged to the separately installed Bakal Gym app, not brdcrmbs. Original emulator display settings are restored after review; the physical phone was never targeted. Reports/captures remain ignored.
+- Room remains version 4, with no schema/migration or locked production-feature changes. Week, all CRUD/integrity/shortcuts, Today/adherence/progress, Progress, saved libraries, Reminders and Backup & Restore production behavior are unchanged. Product Owner physically accepted Backup & Restore with "looks good"; it is now APPROVED / ACCEPTED / LOCKED, superseding historical pending notes.
+- Launcher implementation and emulator validation are complete, but launcher-icon Product Owner physical-device acceptance remains PENDING and the icon is not LOCKED. Await installed-phone review; do not begin App Preferences, Data Management, About or another milestone.
