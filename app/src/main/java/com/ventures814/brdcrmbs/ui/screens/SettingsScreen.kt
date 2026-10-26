@@ -50,6 +50,7 @@ fun SettingsScreen(modifier: Modifier = Modifier, model: SettingsViewModel = rem
     DisposableEffect(Unit) { onDispose { onEditorVisible(false) } }
     BackHandler(enabled = child) { model.back() }
     when {
+        page == SettingsPage.PREFERENCES -> AppPreferencesScreen(modifier, model::back)
         page == SettingsPage.BACKUP -> BackupScreen(modifier, model::back)
         page == SettingsPage.REMINDERS -> RemindersScreen(modifier, model::back)
         draft != null -> SavedItemEditor(draft!!, busy, error, model::change, model::save, model::delete, model::back, modifier)
@@ -77,7 +78,7 @@ private fun SettingsHome(modifier: Modifier, open: (SettingsPage) -> Unit) {
             SettingsRow(R.string.settings_management, R.string.settings_management_help, R.drawable.ic_settings)
         }
         SettingsGroup(R.string.settings_app) {
-            SettingsRow(R.string.settings_preferences, R.string.settings_preferences_help, R.drawable.ic_settings)
+            SettingsRow(R.string.settings_preferences, R.string.settings_preferences_help, R.drawable.ic_settings) { open(SettingsPage.PREFERENCES) }
             HorizontalDivider()
             SettingsRow(R.string.settings_about, R.string.settings_about_help, R.drawable.ic_today)
         }

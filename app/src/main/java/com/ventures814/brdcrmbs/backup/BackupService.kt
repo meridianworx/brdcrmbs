@@ -83,11 +83,13 @@ class BackupService(
             RestoreResult(restoreBoundary {
                 recoverLocked()
                 val before = settings.state.value
-                writeJournal(before, snapshot.reminders, digest(snapshot))
+                val beforeApp = store.appPreferences?.state?.value ?: com.ventures814.brdcrmbs.preferences.AppPreferences()
+                writeJournal(before, snapshot.reminders, digest(snapshot), beforeApp, snapshot.appPreferences)
                 try { store.replace(snapshot) }
                 catch (failure: Exception) {
                     // Room rolled back, including late insert/commit failures. Keep recovery evidence if this write fails.
                     settings.replaceForRestore(before)
+                    store.appPreferences?.replace(beforeApp)
                     journal.delete()
                     throw failure
                 }
@@ -107,22 +109,27 @@ class BackupService(
         }
         // SQLite rolls an interrupted transaction back. Only the exact committed target selects new choices.
         val current = store.snapshot(Instant.EPOCH, excludeQa = false)
-        settings.replaceForRestore(preferences(if (digest(current) == saved.getString("target")) "after" else "before"))
+        val side = if (digest(current) == saved.getString("target")) "after" else "before"
+        settings.replaceForRestore(preferences(side))
+        store.appPreferences?.replace(if (saved.has("${side}App")) BackupCodec.decodePreferences(saved.getJSONObject("${side}App"))
+            else com.ventures814.brdcrmbs.preferences.AppPreferences())
         journal.delete()
     }
 
-    private fun writeJournal(before: ReminderPreferences, after: ReminderPreferences, target: String) {
+    private fun writeJournal(before: ReminderPreferences, after: ReminderPreferences, target: String,
+        beforeApp: com.ventures814.brdcrmbs.preferences.AppPreferences, afterApp: com.ventures814.brdcrmbs.preferences.AppPreferences) {
         journal.baseFile.parentFile?.mkdirs()
         val text = JSONObject().put("target", target)
             .put("before", JSONArray(before.enabled.sortedBy { it.name }.map { it.name }))
-            .put("after", JSONArray(after.enabled.sortedBy { it.name }.map { it.name })).toString()
+            .put("after", JSONArray(after.enabled.sortedBy { it.name }.map { it.name }))
+            .put("beforeApp", BackupCodec.encodePreferences(beforeApp)).put("afterApp", BackupCodec.encodePreferences(afterApp)).toString()
         val output = journal.startWrite()
         try { output.write(text.toByteArray(Charsets.UTF_8)); journal.finishWrite(output) }
         catch (failure: Exception) { journal.failWrite(output); throw failure }
     }
 
     private fun digest(snapshot: BackupSnapshot): String {
-        val canonical = BackupCodec.encode(snapshot.copy(createdAt = Instant.EPOCH, reminders = ReminderPreferences(), appVersion = 1))
+        val canonical = BackupCodec.encode(snapshot.copy(createdAt = Instant.EPOCH, reminders = ReminderPreferences(), appVersion = 1, appPreferences = com.ventures814.brdcrmbs.preferences.AppPreferences()))
         return MessageDigest.getInstance("SHA-256").digest(canonical.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
     }
 

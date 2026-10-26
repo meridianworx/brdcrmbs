@@ -1,6 +1,5 @@
 package com.ventures814.brdcrmbs.ui.activities
 
-import android.text.format.DateFormat
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,7 +9,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -60,7 +58,7 @@ fun ActivityEditorScreen(
                     Text(stringResource(R.string.activity_date_value, draft.date.format(DateTimeFormatter.ofPattern("MMM d, yyyy"))))
                 }
                 OutlinedButton(onClick = { picker = "time" }, enabled = enabled, modifier = Modifier.fillMaxWidth().testTag("activityTime")) {
-                    Text(draft.time?.let { stringResource(R.string.activity_time_value, it.format(DateTimeFormatter.ofPattern("h:mm a"))) } ?: stringResource(R.string.activity_no_time))
+                    Text(draft.time?.let { stringResource(R.string.activity_time_value, it.format(com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.formatter())) } ?: stringResource(R.string.activity_no_time))
                 }
                 if (draft.time != null) TextButton(onClick = { onChange { it.copy(time = null) } }, enabled = enabled) { Text(stringResource(R.string.activity_clear_time)) }
                 Text(stringResource(R.string.activity_type), style = MaterialTheme.typography.labelLarge)
@@ -111,7 +109,7 @@ fun ActivityEditorScreen(
         }, dismissButton = { TextButton(onClick = { picker = null }) { Text(stringResource(R.string.activity_cancel)) } }) { DatePicker(state) }
     }
     if (picker == "time") {
-        val state = rememberTimePickerState(draft.time?.hour ?: 12, draft.time?.minute ?: 0, DateFormat.is24HourFormat(LocalContext.current))
+        val state = rememberTimePickerState(draft.time?.hour ?: 12, draft.time?.minute ?: 0, com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.is24Hour)
         AlertDialog(onDismissRequest = { picker = null }, title = { Text(stringResource(R.string.activity_time_title)) }, text = { TimeInput(state) },
             confirmButton = { TextButton(onClick = { onChange { it.copy(time = LocalTime.of(state.hour, state.minute)) }; picker = null }) { Text(stringResource(R.string.activity_ok)) } },
             dismissButton = { TextButton(onClick = { picker = null }) { Text(stringResource(R.string.activity_cancel)) } })

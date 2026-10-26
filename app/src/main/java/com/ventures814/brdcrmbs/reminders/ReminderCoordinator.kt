@@ -12,7 +12,8 @@ class ReminderCoordinator(
     val settings: ReminderSettingsStore,
     private val backend: ReminderBackend,
     private val allowed: () -> Boolean,
-    private val clock: () -> Clock = { Clock.systemDefaultZone() }
+    private val clock: () -> Clock = { Clock.systemDefaultZone() },
+    private val displayClock: () -> com.ventures814.brdcrmbs.preferences.ClockFormat = { com.ventures814.brdcrmbs.preferences.ClockFormat() }
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
@@ -47,8 +48,12 @@ class ReminderCoordinator(
     }
     suspend fun deliver(key: String, at: java.time.Instant) = mutex.withLock {
         val current = clock()
-        val eligible = ReminderPolicy.eligible(repository.observeReminderPlans().first(), settings.state.value, current.zone)
-        reconciler.deliver(key, at, eligible, current.instant(), allowed())
+        val data = repository.observeReminderPlans().first()
+        val preferences = settings.state.value
+        // Text must not change equality used by the locked pending-alarm/grace-period policy.
+        val eligible = ReminderPolicy.eligible(data, preferences, current.zone)
+        val displayed = ReminderPolicy.eligible(data, preferences, current.zone, displayClock()).associateBy { it.key }
+        reconciler.deliver(key, at, eligible, current.instant(), allowed()) { displayed.getValue(it.key) }
         reconciler.sync(eligible, current.instant(), allowed())
         pending.value = backend.pending().values.sortedBy { it.at }
     }

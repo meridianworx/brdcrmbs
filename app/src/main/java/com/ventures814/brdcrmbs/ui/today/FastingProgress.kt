@@ -44,11 +44,11 @@ fun remainingFastingTime(duration: Duration): String {
         .filter { it.first > 0 }.joinToString(" ") { "${it.first}${it.second}" }
 }
 
-fun FastingEvent.endTimeLabel(now: Instant): String {
+fun FastingEvent.endTimeLabel(now: Instant, clockFormat: com.ventures814.brdcrmbs.preferences.ClockFormat = com.ventures814.brdcrmbs.preferences.ClockFormat()): String {
     val endLocal = end.atZone(zone)
     val today = now.atZone(zone).toLocalDate()
     val date = endLocal.toLocalDate()
-    val time = endLocal.format(DateTimeFormatter.ofPattern("h:mm a"))
+    val time = endLocal.format(clockFormat.formatter())
     return when (date) {
         today -> "Ends at $time"
         today.plusDays(1) -> "Ends tomorrow at $time"

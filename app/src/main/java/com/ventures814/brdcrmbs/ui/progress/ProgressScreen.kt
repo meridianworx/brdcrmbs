@@ -170,7 +170,7 @@ fun ProgressScreen(state: ProgressState, previous: () -> Unit, next: () -> Unit,
 @Composable private fun DayDetail(day: ReviewDay) {
     var expanded by rememberSaveable(day.date) { mutableStateOf(false) }
     val plans = day.plans
-    val time = DateTimeFormatter.ofPattern("h:mm a")
+    val time = com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.formatter()
     Surface(Modifier.fillMaxWidth().testTag("dayDetailCard"), shape = RoundedCornerShape(12.dp), color = ReviewCardColor, border = BorderStroke(.5.dp, ReviewOutline)) {
         Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -183,7 +183,7 @@ fun ProgressScreen(state: ProgressState, previous: () -> Unit, next: () -> Unit,
             HorizontalDivider(color = ReviewOutline)
             val fast = plans.fasting.singleOrNull()
             val fastSchedule = fast?.let {
-                val format = DateTimeFormatter.ofPattern("MMM d, h:mm a")
+                val format = com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.formatter("MMM d, ")
                 val start = it.start.atZone(it.zone)
                 val end = it.end.atZone(it.zone)
                 if (start.toLocalDate() == day.date && Duration.between(it.start, it.end) < Duration.ofHours(24))
@@ -224,8 +224,8 @@ fun ProgressScreen(state: ProgressState, previous: () -> Unit, next: () -> Unit,
 }
 
 @Composable private fun FullDetails(plans: PlanningData) {
-    val time = DateTimeFormatter.ofPattern("h:mm a")
-    val schedule = DateTimeFormatter.ofPattern("MMM d, yyyy · h:mm a")
+    val time = com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.formatter()
+    val schedule = com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.formatter("MMM d, yyyy · ")
     HorizontalDivider(color = ReviewOutline)
     plans.fasting.forEach { fast ->
         Text(fast.preset ?: "Fast", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.testTag("detail-fast-${fast.id}"))

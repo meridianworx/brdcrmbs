@@ -1,6 +1,5 @@
 package com.ventures814.brdcrmbs.ui.fasting
 
-import android.text.format.DateFormat
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -9,7 +8,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -35,7 +33,7 @@ fun FastingEditorScreen(
     val duration = if (draft.preset == FastPreset.NO_FAST) null else runCatching { draft.duration() }
     val validation = duration?.exceptionOrNull()?.message
     val dateFormat = DateTimeFormatter.ofPattern("MMM d, yyyy")
-    val timeFormat = DateTimeFormatter.ofPattern("h:mm a")
+    val timeFormat = com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.formatter()
     Column(
         modifier.verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -120,7 +118,7 @@ fun FastingEditorScreen(
                 DatePicker(state)
             }
         } else {
-            val state = rememberTimePickerState(value.hour, value.minute, DateFormat.is24HourFormat(LocalContext.current))
+            val state = rememberTimePickerState(value.hour, value.minute, com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.is24Hour)
             AlertDialog(onDismissRequest = { picker = null }, title = { Text(stringResource(if (start) R.string.fast_start_time else R.string.fast_end_time)) },
                 text = { TimeInput(state) },
                 confirmButton = { TextButton(onClick = {

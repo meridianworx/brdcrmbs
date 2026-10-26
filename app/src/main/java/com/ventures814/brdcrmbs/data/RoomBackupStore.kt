@@ -8,7 +8,8 @@ import com.ventures814.brdcrmbs.reminders.ReminderSettingsStore
 import java.time.Instant
 
 /** Dedicated whole-history boundary; ordinary planning writes retain their locked validation. */
-class RoomBackupStore(private val database: PlanningDatabase, private val settings: ReminderSettingsStore) {
+class RoomBackupStore(private val database: PlanningDatabase, private val settings: ReminderSettingsStore,
+    val appPreferences: com.ventures814.brdcrmbs.preferences.AppPreferencesStore? = null) {
     private val dao = database.planningDao()
     suspend fun snapshot(at: Instant, excludeQa: Boolean = true): BackupSnapshot = database.withTransaction {
         fun keep(id: String) = !excludeQa || !isBackupQaOwned(id)
@@ -22,7 +23,7 @@ class RoomBackupStore(private val database: PlanningDatabase, private val settin
             },
             dao.backupActivities().map { it.model() }.filter { keep(it.id) },
             dao.backupNoFast().map { it.model() }.filter { keep(it.id) }
-        ), dao.savedMeals().map { it.model() }, dao.savedActivities().map { it.model() }, settings.state.value).validate()
+        ), dao.savedMeals().map { it.model() }, dao.savedActivities().map { it.model() }, settings.state.value, appPreferences = appPreferences?.state?.value ?: com.ventures814.brdcrmbs.preferences.AppPreferences()).validate()
         // A genuine activity referencing an excluded QA parent rejects export, never loses its history.
     }
 
@@ -37,6 +38,7 @@ class RoomBackupStore(private val database: PlanningDatabase, private val settin
         snapshot.savedMeals.forEach { dao.insert(it.entity()) }
         snapshot.savedActivities.forEach { dao.insert(it.entity()) }
         settings.replaceForRestore(snapshot.reminders)
+        appPreferences?.replace(snapshot.appPreferences)
         // Detect deferred constraints while Room can still roll back normally. Android SQLite can
         // leave a native transaction open when a deferred FK fails during endTransaction/COMMIT.
         database.openHelper.writableDatabase.query("PRAGMA foreign_key_check").use {

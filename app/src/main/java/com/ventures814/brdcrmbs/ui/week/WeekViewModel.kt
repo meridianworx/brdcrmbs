@@ -30,8 +30,11 @@ import com.ventures814.brdcrmbs.ui.activities.ActivityDraft
 class WeekViewModel(
     private val repository: PlanningRepository,
     private val savedState: SavedStateHandle,
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.systemDefaultZone(),
+    private val defaultFasting: () -> com.ventures814.brdcrmbs.ui.fasting.FastPreset? = { null }
 ) : ViewModel() {
+    private val displayClock = MutableStateFlow(com.ventures814.brdcrmbs.preferences.ClockFormat())
+    fun setClockFormat(value: com.ventures814.brdcrmbs.preferences.ClockFormat) { displayClock.value = value }
     private val zone = clock.zone
     private val initialStart = DateRange.weekContaining(LocalDate.now(clock)).start.toEpochDay()
     private val weekStart = savedState.getStateFlow("weekStart", initialStart)
@@ -268,7 +271,7 @@ class WeekViewModel(
         editorError.value = null
         savedState["fastDraft"] = FastingDraft.new(
             LocalDate.ofEpochDay(weekStart.value).plusDays(selectedDay.value.toLong()), zone
-        )
+        ).let { draft -> defaultFasting()?.let(draft::selectPreset) ?: draft }
     }
 
     fun editFast(id: String) {
@@ -351,8 +354,8 @@ class WeekViewModel(
             .catch { emit(LoadedWeek(range, PlanningData(), failed = true)) }
     }
 
-    val state = combine(loadedWeek, selectedDay) { loaded, selected ->
-        presentWeek(loaded.range, selected, loaded.data, zone)
+    val state = combine(loadedWeek, selectedDay, displayClock) { loaded, selected, format ->
+        presentWeek(loaded.range, selected, loaded.data, zone, clockFormat = format)
             .copy(loading = loaded.loading, failed = loaded.failed)
     }.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5_000),

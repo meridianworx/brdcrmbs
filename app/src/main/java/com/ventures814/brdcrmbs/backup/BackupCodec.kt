@@ -18,6 +18,18 @@ object BackupCodec {
     private fun <T> rows(values: List<T>, id: (T) -> String, encode: (T) -> JSONObject) = JSONArray().apply { values.sortedBy(id).forEach { put(encode(it)) } }
     private fun actual(a: ActualMeal) = obj("text" to a.text, "time" to a.time?.toString(), "label" to a.label, "notes" to a.notes)
 
+    fun encodePreferences(p: com.ventures814.brdcrmbs.preferences.AppPreferences): JSONObject = obj(
+        "timeFormat" to p.timeFormat.name, "fastingPreset" to p.fastingPreset?.name, "mealCount" to p.mealCount)
+
+    fun decodePreferences(p: JSONObject): com.ventures814.brdcrmbs.preferences.AppPreferences {
+        p.fields("timeFormat", "fastingPreset", "mealCount")
+        val count = p.get("mealCount")
+        require((count is Long || count is Int) && (count as Number).toLong() in 1..6)
+        return com.ventures814.brdcrmbs.preferences.AppPreferences(
+            com.ventures814.brdcrmbs.preferences.TimeFormat.valueOf(p.text("timeFormat")),
+            p.optional("fastingPreset")?.let(com.ventures814.brdcrmbs.ui.fasting.FastPreset::valueOf), (count as Number).toInt())
+    }
+
     fun encode(snapshot: BackupSnapshot): String {
         val s = snapshot.validate()
         val data = obj(
@@ -30,7 +42,10 @@ object BackupCodec {
         )
         return obj("type" to TYPE, "formatVersion" to VERSION, "createdAt" to s.createdAt.toString(),
             "databaseVersion" to 4, "appVersion" to s.appVersion, "data" to data,
-            "reminderPreferences" to JSONArray(ReminderType.entries.filter { it in s.reminders.enabled }.map { it.name })).toString().also {
+            "reminderPreferences" to JSONArray(ReminderType.entries.filter { it in s.reminders.enabled }.map { it.name })).apply {
+                // Omit all-default configuration: old format-1 canonical bytes/recovery digests stay valid.
+                if (s.appPreferences != com.ventures814.brdcrmbs.preferences.AppPreferences()) put("appPreferences", encodePreferences(s.appPreferences))
+            }.toString().also {
             require(it.toByteArray(Charsets.UTF_8).size <= MAX_BYTES) { "Backup exceeds the supported 32 MiB size." }
         }
     }
@@ -60,7 +75,10 @@ object BackupCodec {
             val parsed = readValue(reader, 0)
             require(reader.peek() == JsonToken.END_DOCUMENT && parsed is JSONObject) { "Invalid backup document." }
             parsed
-        }.fields("type", "formatVersion", "createdAt", "databaseVersion", "appVersion", "data", "reminderPreferences")
+        }.also { root ->
+            val required = arrayOf("type", "formatVersion", "createdAt", "databaseVersion", "appVersion", "data", "reminderPreferences")
+            root.fields(*(required + if (root.has("appPreferences")) arrayOf("appPreferences") else emptyArray()))
+        }
         require(root.text("type") == TYPE) { "This is not a brdcrmbs backup." }
         require(root.integer("formatVersion") == VERSION && root.integer("databaseVersion") == 4) { "Unsupported backup version." }
         val d = root.getJSONObject("data").fields("fasting", "noFast", "meals", "activities", "savedMeals", "savedActivities")
@@ -91,7 +109,8 @@ object BackupCodec {
             require(names.toSet().size == names.size)
             ReminderPreferences(names.toSet())
         }
-        return BackupSnapshot(Instant.parse(root.text("createdAt")), plans, meals, activities, preferences, root.integer("appVersion")).validate()
+        return BackupSnapshot(Instant.parse(root.text("createdAt")), plans, meals, activities, preferences, root.integer("appVersion"),
+            if (root.has("appPreferences")) decodePreferences(root.getJSONObject("appPreferences")) else com.ventures814.brdcrmbs.preferences.AppPreferences()).validate()
     }
 
     /** Strict syntax, duplicate-name rejection, bounded nesting and no trailing content. */

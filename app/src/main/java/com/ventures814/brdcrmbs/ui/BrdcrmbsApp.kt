@@ -35,6 +35,11 @@ private enum class Destination(@param:StringRes val label: Int, @param:DrawableR
 
 @Composable
 fun BrdcrmbsApp() {
+    com.ventures814.brdcrmbs.ui.settings.TimePresentation { BrdcrmbsContent() }
+}
+
+@Composable
+private fun BrdcrmbsContent() {
     var selected by rememberSaveable { mutableStateOf(Destination.Today) }
     var editorVisible by remember { mutableStateOf(false) }
     var resetWeekRequested by remember { mutableStateOf(false) }

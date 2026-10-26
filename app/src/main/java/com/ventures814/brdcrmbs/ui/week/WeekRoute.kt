@@ -25,7 +25,7 @@ import com.ventures814.brdcrmbs.ui.activities.ActivityEditorScreen
 fun rememberWeekModel(): WeekViewModel {
     val application = LocalContext.current.applicationContext as BrdcrmbsApplication
     return viewModel(factory = viewModelFactory {
-        initializer { WeekViewModel(application.planningRepository, createSavedStateHandle()) }
+        initializer { WeekViewModel(application.planningRepository, createSavedStateHandle(), defaultFasting = { application.appPreferences.state.value.fastingPreset }) }
     })
 }
 
@@ -37,6 +37,8 @@ fun WeekRoute(
     resetToTodayRequested: Boolean = false,
     onResetHandled: () -> Unit = {}
 ) {
+    val format = com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current
+    LaunchedEffect(format, model) { model.setClockFormat(format) }
     LaunchedEffect(resetToTodayRequested) {
         if (resetToTodayRequested) {
             model.resetToToday()

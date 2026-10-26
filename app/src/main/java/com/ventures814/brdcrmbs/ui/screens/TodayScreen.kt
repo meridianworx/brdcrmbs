@@ -29,7 +29,7 @@ import java.time.Instant
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-private fun LocalTime.display() = format(DateTimeFormatter.ofPattern("h:mm a"))
+@Composable private fun LocalTime.display() = format(com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.formatter())
 
 @Composable
 fun TodayScreen(state: TodayState, busy: Boolean, error: String?,
@@ -49,7 +49,7 @@ fun TodayScreen(state: TodayState, busy: Boolean, error: String?,
         }
         TodaySection("Fasting", R.drawable.ic_fast, state.plans.fasting.isEmpty() && state.plans.noFast.isEmpty()) {
             state.plans.fasting.forEach { fast -> key(fast.id) {
-                val format = DateTimeFormatter.ofPattern("MMM d, yyyy · h:mm a")
+                val format = com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.formatter("MMM d, yyyy · ")
                 val minutes = Duration.between(fast.start, fast.end).toMinutes()
                 Text(fast.preset ?: "Fast", style = MaterialTheme.typography.titleMedium)
                 Text("${fast.start.atZone(fast.zone).format(format)} →\n${fast.end.atZone(fast.zone).format(format)}")
@@ -122,7 +122,7 @@ fun TodayScreen(state: TodayState, busy: Boolean, error: String?,
             append(" remaining")
         }, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(end = 16.dp).testTag("fastingRemaining-${fast.id}"))
-        Text(fast.endTimeLabel(now), style = MaterialTheme.typography.bodyMedium,
+        Text(fast.endTimeLabel(now, com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("fastingEnd-${fast.id}"))
     }
 }

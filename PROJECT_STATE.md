@@ -9,7 +9,7 @@
 - **Package name:** com.ventures814.brdcrmbs (namespace and application ID)
 - **Platform:** Android
 - **Repository:** https://github.com/meridianworx/brdcrmbs.git (origin; primary branch main)
-- **Development stage:** Week, Today adherence, Progress, Settings foundation, saved libraries, Reminders, fasting plan integrity, Today active-fasting progress presentation and Backup & Restore are physically accepted/LOCKED. Approved launcher-icon installation is the current narrow milestone. Overall Settings is not complete.
+- **Development stage:** Week, Today adherence, Progress, Settings foundation, saved libraries, Reminders, fasting plan integrity, Today active-fasting progress presentation and Backup & Restore are physically accepted/LOCKED. The launcher icon is physically accepted/LOCKED. App Preferences is the current controlled milestone. Overall Settings is not complete.
 
 # Purpose
 
@@ -218,7 +218,7 @@ Android foundation implemented:
 
 ## In Progress
 
-- Installed launcher-icon Product Owner physical-device acceptance. Implementation and emulator validation are complete; the icon is not LOCKED. Backup & Restore passed Product Owner physical-device testing ("looks good") and is now APPROVED / ACCEPTED / LOCKED; earlier pending notes are historical.
+- App Preferences implementation and automated/emulator validation are complete; Product Owner physical-device acceptance remains pending. Scope is Time Format, Default Fasting Preset and Default Meal Count only. Launcher icon and Backup & Restore passed Product Owner physical-device review ("looks good") and are APPROVED / ACCEPTED / LOCKED; earlier pending notes are historical.
 
 ## Planned
 
@@ -361,19 +361,18 @@ Support user-configured reminders for:
 
 ### App Preferences
 
-Keep practical and minimal.
+Approved scope is exactly:
+- Time Format: System default (initial), 12-hour, 24-hour; presentation only.
+- Default Fasting Preset: No default (initial), or an existing canonical duration/OMAD preset; Custom and No fast are not reusable defaults. No default retains the existing 16:8 draft initialization without applying a user override.
+- Default Meal Count: 1–6, initially 3. Persist/display only in the current planner: meals are added individually, with no slot/count initialization. Behavioral consumption is deferred; do not invent a meal-slot model.
 
-Potential baseline preferences:
-- Appearance
-- Time format
-- Week start
-- Default fasting preset
-- Default meal count
-- In-app notifications
+Monday-first Week and the approved dark theme remain locked/non-configurable. Notification controls remain under Reminders. Developer / Testing hiding is deferred to Final Cleanup.
 
 Do not add measurement/unit settings unless an implemented feature actually needs them.
 
 # Locked Decisions
+
+- Product Owner physically reviewed the installed launcher icon and said "looks good" (2026-10-25). Launcher icon is APPROVED / ACCEPTED / LOCKED. Preserve docs/design/brdcrmbs-launcher-icon-approved.png as the permanent approved source and preserve installed launcher resources.
 
 - Product Owner physically tested Backup & Restore and said "looks good" (2026-10-25). Backup & Restore is APPROVED / ACCEPTED / LOCKED. Preserve its user-controlled SAF flows, portable format, data scope, validated/confirmed replace policy, atomic recovery, history preservation and reminder reconciliation. The launcher-icon task changes no backup production implementation.
 
@@ -425,7 +424,7 @@ The following have Product Owner approval and must not be changed casually:
 
 # Approved UI / UX
 
-Launcher-icon artwork source of truth: docs/design/brdcrmbs-launcher-icon-approved.png (SHA-256 21AE691CE1A8551D5B5DAA9BF8A650D10B9F16BB21B15813E92648A0440FA3A4). Preserve its four green breadcrumb/path stones, relative hierarchy and charcoal identity without text or redesign. The artwork is approved; installed launcher-icon physical-device acceptance remains pending.
+Launcher-icon artwork source of truth: docs/design/brdcrmbs-launcher-icon-approved.png (SHA-256 21AE691CE1A8551D5B5DAA9BF8A650D10B9F16BB21B15813E92648A0440FA3A4). Preserve its four green breadcrumb/path stones, relative hierarchy and charcoal identity without text or redesign. The artwork and installed launcher icon are APPROVED / ACCEPTED / LOCKED following Product Owner physical-device review ("looks good").
 
 Approved baseline visual direction:
 - Dark charcoal / near-black interface
@@ -462,7 +461,7 @@ Today active fasting visual source of truth: docs/design/today-active-fasting-ap
 # Known Issues
 
 - Week, Today adherence and corrected Progress passed physical-device Product Owner acceptance and are approved/locked. That historical populated Progress review included mixed statuses, meal fractions, full Day Detail and legacy overlapping fasting. New fasting writes now follow the locked integrity rule; existing historical records remain readable. Earlier visual divergence is resolved; the approved reference remains at docs/design/progress-approved-screen-3.png.
-- Installed launcher-icon physical-device Product Owner acceptance remains pending. Backup & Restore is accepted/LOCKED; earlier pending backup notes are historical.
+- App Preferences physical-device Product Owner acceptance remains pending. Launcher icon and Backup & Restore are accepted/LOCKED; earlier pending notes are historical.
 
 # Backlog
 
@@ -476,7 +475,7 @@ Future health measurements must not automatically control the user's plan.
 
 # Current Development Focus
 
-Await Product Owner physical-device acceptance of the installed Android launcher icon. Implementation and emulator validation are complete; the icon remains pending, not LOCKED. Preserve all locked features, including newly accepted Backup & Restore. App Preferences, Data Management and About remain future milestones; do not begin them without a separate request.
+App Preferences implementation and automated/emulator validation are complete. Await Product Owner physical-device acceptance (PENDING / NOT LOCKED). Preserve all locked features, including the newly accepted launcher icon. Data Management, About, Developer / Testing hiding and final release cleanup remain separate future milestones; do not begin them in this task.
 
 Debug builds provide Settings → Developer / Testing → Progress Test Data for repeatable physical-device QA of Week, Today and Progress, plus Seed Active Fast for current-instant Today visual testing. Both scenarios use the production fasting-integrity boundary and safely reject conflicts. Reset Test Data removes only exact QA-owned records, preserving genuine plans/history and saved libraries. This is development tooling, not product Settings functionality; source-set release isolation must be preserved.
 
@@ -847,3 +846,32 @@ Debug builds provide Settings → Developer / Testing → Progress Test Data for
 - Recovered the recurring cold-boot com.android.systemui ANR after recording its dialog; no production workaround was added. Early swipe attempts did not open All apps; the native All apps key opened it and clean captures verified the ordinary icon. The initial robot seen on Home belonged to the separately installed Bakal Gym app, not brdcrmbs. Original emulator display settings are restored after review; the physical phone was never targeted. Reports/captures remain ignored.
 - Room remains version 4, with no schema/migration or locked production-feature changes. Week, all CRUD/integrity/shortcuts, Today/adherence/progress, Progress, saved libraries, Reminders and Backup & Restore production behavior are unchanged. Product Owner physically accepted Backup & Restore with "looks good"; it is now APPROVED / ACCEPTED / LOCKED, superseding historical pending notes.
 - Launcher implementation and emulator validation are complete, but launcher-icon Product Owner physical-device acceptance remains PENDING and the icon is not LOCKED. Await installed-phone review; do not begin App Preferences, Data Management, About or another milestone.
+
+## App Preferences — 2026-10-25
+
+- Started from clean main at 67017bc, matching origin/main. Product Owner physically reviewed the installed launcher icon and said "looks good"; icon/artwork are now APPROVED / ACCEPTED / LOCKED. The reference PNG, generator and every launcher resource remain unchanged.
+- Settings → App Preferences is a focused child screen with exactly Time format, Default fasting preset and Default meal count, using compact charcoal rounded rows, green accents and simple scrollable radio-choice dialogs. Bottom navigation hides while in the child; Back returns to Settings. Checked writes, busy protection and failure feedback live in AppPreferencesViewModel/store, not in Compose persistence code.
+- AppPreferencesStore uses one lightweight local SharedPreferences file, checked commit on Dispatchers.IO, a mutex and StateFlow. UI changes share the existing restore boundary so a preference write cannot interleave backup replacement. No dependency, network requirement, Room table or migration. Room remains version 4.
+- Time Format choices are System default (new-install default), 12-hour and 24-hour. A pure ClockFormat owns presentation patterns; the app composition observes persisted choices with lifecycle-aware collection, observes the device TIME_12_24 setting and refreshes it on resume. System default resolves through Android DateFormat.is24HourFormat. No persisted Instant/LocalTime, zone, duration, date, outcome or scheduling calculation changes.
+- Clock presentation covers Week fasting/meal/activity rows, Today fasting schedules/planned and actual meal/activity times/active-fast end labels, Progress compact/full Day Detail, Add/Edit Fasting, Add/Edit Meal, Change Meal / Log Actual, Add/Edit Activity, delivered fasting-notification end text and Backup/Restore preview metadata. Saved library editors have no scheduled times. Dates and ISO backup/internal serialization remain independent. Existing Material TimeInput supports an explicit is24Hour mode cleanly, so its mode follows the resolved app preference without redesigning controls. Reminder triggers/eligibility remain unchanged; delivery renders the current time choice rather than rescheduling alarms when a display preference changes. Debug raw-instant diagnostics remain unchanged.
+- Default Fasting Preset is No default initially, or one of the existing canonical 12:12 / 14:10 / 16:8 / 18:6 / 20:4 / OMAD / 24h / 36h / 48h / 72h entries. The choice list filters the existing FastPreset enum; no parallel preset definitions. Custom remains explicit editor input; No fast is not a persistent default. New Week Add Fast reads the latest saved choice and applies the existing selectPreset operation. No default means no preference override: the locked editor's existing 16:8 starting values remain. Drafts remain editable/unsaved until Save. Existing-fast edits still load FastingDraft.from(record) and ignore defaults; overlap, No Fast, adjacency, continuous-event and history validation remain authoritative below the UI.
+- Default Meal Count stores 1–6, initially 3. Current MealDraft/editor creates one explicitly named meal per action; there is no day initialization or meal-slot/count builder. Therefore behavioral consumption is deliberately deferred under the request's exception. The row persists/displays the preference, and the screen explains that meals are currently added individually. Viewing days/navigation creates no empty records, changes no planned/historical meals and does not alter saved templates. No new meal-planning model is invented.
+- Backup format remains 1 / database version 4. Optional appPreferences contains the three choices with strict validation; absent means System default / No default / 3. All-default configuration omits the extension, preserving old canonical bytes and old recovery digests. Current app restores older files with defaults, while retaining all four reminder choices and unchanged history/replacement policy. Older app binaries with strict unknown-field rejection are not promised to import a new non-default-preferences extension. Restore journals now capture before/after App Preferences as well as reminders; compensation and interrupted-commit recovery cover both stores. Pre-preferences journals remain readable with defaults. Confirmation text includes App Preferences among replaced configuration.
+- Monday-first Week remains locked and non-configurable. Approved dark theme remains locked; no appearance/accent/units/health/account settings were added. Notification controls remain under Reminders. Developer / Testing content and source-set release isolation remain intact; hiding those controls belongs to Final Cleanup. Data Management, About and release cleanup are outside this milestone.
+- Initial complete checks passed debug/release builds (release unsigned), Android test compilation, all 84 JVM tests and both lints (each 0 errors / 11 existing warnings). Focused Android run passed 20/21: the new reactive-format test incorrectly used exact-text matching with the partial string "18:00" against the correctly rendered "Ends at 18:00". Corrected the new assertion to assert the complete label; existing assertions/production behavior were not weakened. Passing focused rerun, full regression and final native review are still being completed at this checkpoint; this is not a claim of final validation.
+- App Preferences physical-device Product Owner acceptance remains PENDING; this milestone is not LOCKED.
+
+### Resumed App Preferences validation — 2026-10-26
+
+- Recovered 31 existing modified/new files at main/origin/main 67017bc; no App Preferences commit existed. Preserved every implementation/test/state file without reset, discard, stash or duplicate implementation. Confirmed the complete inventory, locked boundaries, source artwork hash, Room version 4 and unchanged schema/dependency/debug/release source sets.
+- The interrupted second focused run also finished 20/21: its remaining new-test selector expected exact text Review all details without the disclosure glyph. Used the existing reviewDetails tag while asserting the complete approved label, retaining every data/presentation assertion. The resumed focused AppPreferencesUiTest + AppPreferencesPersistenceTest + BackupCodecTest + BackupPersistenceTest run passed 21/21, 0 failures/errors/skipped. This includes all eight new Android tests and thirteen existing backup tests. Earlier failed reports and the passing report are retained separately under ignored app/build/preferences-review.
+- The earlier full Pixel_6_Pro API 37 / Android 17 regression passed 152/152 in one uninterrupted run, 0 failures/errors/skipped. All 144 existing tests and eight new Preferences tests passed, including locked Week/CRUD/integrity/shortcuts, Today/adherence/progress, Progress, libraries, Reminders, backup/recovery, QA and migration/history tests. The same wrapper invocation confirmed debug/release builds, Android test compilation, 84 passing JVM tests and both lints. Full evidence is retained at app/build/preferences-review/full-passed.
+- Static UI review found the pre-existing Settings row subtitle still advertised Appearance although only Time Format and planning defaults are approved. Changed only that subtitle to Time format and planning defaults; no appearance feature or layout redesign. This adds settings.xml as the 32nd scoped file. The affected Settings/Preferences/navigation rerun passed 8/8 with builds/JVM/lints passing. The 152-test run above predates this subtitle correction and the later reminder-formatting correction below.
+
+- Final audit reproduced one genuine presentation regression with a new isolated coordinator/backend test: formatting eligible reminders as 24-hour text changed full-value equality, causing a second overdue-but-still-eligible alarm to be dropped after delivery of the first. The new test failed on that exact pending-alarm assertion. Kept eligibility/reconciliation comparisons in their established stable representation and applied the selected clock format only to the notification posted after eligibility checks. Trigger instants, keys, consumption journal, grace period, permissions and scheduling policy are unchanged. Retained the regression test and its failing evidence at app/build/preferences-review/reminder-regression-reproduced. This scoped fix passed the focused Preferences/backup/reminder group and the final complete regression run recorded below; the earlier 152-test pass predates this additional test/correction.
+
+- After the reminder correction, focused Preferences/backup/reminder validation passed 28/28, 0 failures/errors/skipped, including the new two-delayed-alarm regression. Debug/release builds, Android test compilation and all 84 JVM tests passed; both lints report 0 errors / 11 existing warnings. The fresh complete 153-test emulator run passed against this final production source, as recorded below.
+- Native emulator review confirmed Settings → App Preferences, exactly three rows/choice dialogs, hidden child bottom navigation and Back restoring Settings/navigation. Selected 24-hour / 48h / 6 survived force-stop and cold app restart. New Add Fast used 48h and 19:00 → two days later 19:00; changing the default to 12:12 left the existing saved 48h event/preset/timestamps unchanged. Removed only that temporary review event, then confirmed a new 12:12 unsaved draft shows 7:00 PM → 7:00 AM under 12-hour. System default reacted live to the emulator device setting, switching 19:00/07:00 ↔ 7:00 PM/7:00 AM with duration unchanged. Restored original device clock setting and app System default / No default / 3. Final Week shows Nothing planned in every category, Meals (0), Activity (0); no empty meals or slots were created. Native captures/XML remain ignored under app/build/preferences-review. No physical phone was targeted. App Preferences acceptance remains PENDING / NOT LOCKED.
+
+- Final wrapper invocation passed :app:assembleDebug, :app:assembleRelease (unsigned), :app:assembleDebugAndroidTest, :app:test, :app:lintDebug, :app:lintRelease and :app:connectedDebugAndroidTest, BUILD SUCCESSFUL in 19m 23s. Complete final-source Pixel_6_Pro API 37 / Android 17 regression passed 153/153 in one uninterrupted run: all 144 existing tests plus nine new Preferences tests, 0 failures/errors/skipped. Complete JVM suite passed 84/84, 0 failures/errors/skipped. Each lint variant remains 0 errors / 11 existing warnings (redundant activity label, seven unused starter colors, three dependency-update notices); existing reminder instrumentation deprecation is non-blocking. Final full report is preserved at ignored app/build/preferences-review/final-full-153-passed; focused 28/28 evidence at reminder-fix-focused-passed. Earlier new-test fixture/selector failures and the genuine reminder regression were diagnosed and corrected without weakening existing assertions.
+- Final scope review contains 32 changed/new source, test, resource and state files. No Room/schema/migration/dependency/launcher-artwork/resource/debug/release-source change. All requested implementation, build/test/lint and native emulator review work is complete; App Preferences physical-device acceptance remains PENDING and is NOT APPROVED/LOCKED. Launcher icon remains APPROVED / ACCEPTED / LOCKED. Developer / Testing hiding, Data Management, About, final cleanup and release preparation remain deferred; stop after publishing this checkpoint.

@@ -1,6 +1,5 @@
 package com.ventures814.brdcrmbs.ui.today
 
-import android.text.format.DateFormat
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -8,12 +7,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import com.ventures814.brdcrmbs.domain.MealPlan
 import androidx.compose.ui.unit.dp
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +25,7 @@ fun ActualMealEditor(draft: ActualMealDraft?, original: MealPlan?, busy: Boolean
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Original planned meal", color = MaterialTheme.colorScheme.primary)
                     Text(plan.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.testTag("originalMeal"))
-                    Text(listOfNotNull(plan.label, plan.time?.format(DateTimeFormatter.ofPattern("h:mm a")), plan.date.toString(), plan.notes).joinToString(" · "))
+                    Text(listOfNotNull(plan.label, plan.time?.format(com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.formatter()), plan.date.toString(), plan.notes).joinToString(" · "))
                 }
             }
         }
@@ -39,7 +36,7 @@ fun ActualMealEditor(draft: ActualMealDraft?, original: MealPlan?, busy: Boolean
             OutlinedTextField(draft.label, { value -> onChange { it.copy(label = value) } }, label = { Text("Type / label (optional)") },
                 enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("actualLabel"))
             OutlinedButton(onClick = { picker = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("actualTime")) {
-                Text(draft.time?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "Add time (optional)")
+                Text(draft.time?.format(com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.formatter()) ?: "Add time (optional)")
             }
             if (draft.time != null) TextButton(onClick = { onChange { it.copy(time = null) } }, enabled = !busy) { Text("Remove time") }
             OutlinedTextField(draft.notes, { value -> onChange { it.copy(notes = value) } }, label = { Text("Notes (optional)") },
@@ -51,7 +48,7 @@ fun ActualMealEditor(draft: ActualMealDraft?, original: MealPlan?, busy: Boolean
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("actualError")) }
     }
     if (picker && draft != null) {
-        val time = rememberTimePickerState(draft.time?.hour ?: 12, draft.time?.minute ?: 0, DateFormat.is24HourFormat(LocalContext.current))
+        val time = rememberTimePickerState(draft.time?.hour ?: 12, draft.time?.minute ?: 0, com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.is24Hour)
         AlertDialog(onDismissRequest = { picker = false }, title = { Text("Actual meal time") }, text = { TimeInput(time) },
             confirmButton = { TextButton(onClick = { onChange { it.copy(time = LocalTime.of(time.hour, time.minute)) }; picker = false }) { Text("OK") } },
             dismissButton = { TextButton(onClick = { picker = false }) { Text("Cancel") } })

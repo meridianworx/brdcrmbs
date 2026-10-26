@@ -11,7 +11,8 @@ data class BackupSnapshot(
     val savedMeals: List<SavedMeal> = emptyList(),
     val savedActivities: List<SavedActivity> = emptyList(),
     val reminders: ReminderPreferences = ReminderPreferences(),
-    val appVersion: Int = 1
+    val appVersion: Int = 1,
+    val appPreferences: com.ventures814.brdcrmbs.preferences.AppPreferences = com.ventures814.brdcrmbs.preferences.AppPreferences()
 ) {
     val count: Int get() = plans.fasting.size + plans.noFast.size + plans.meals.size + plans.activities.size + savedMeals.size + savedActivities.size
 

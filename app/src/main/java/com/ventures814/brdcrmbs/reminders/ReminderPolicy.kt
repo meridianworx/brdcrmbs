@@ -2,7 +2,6 @@ package com.ventures814.brdcrmbs.reminders
 
 import com.ventures814.brdcrmbs.domain.*
 import java.time.*
-import java.time.format.DateTimeFormatter
 
 enum class ReminderType { FAST_START, FAST_END, MEAL, ACTIVITY }
 data class ReminderPreferences(val enabled: Set<ReminderType> = emptySet()) {
@@ -13,13 +12,13 @@ data class PlanReminder(val key: String, val type: ReminderType, val at: Instant
 object ReminderPolicy {
     // Inexact alarms may arrive late, but never replay stale day-old plans.
     val maxDelay: Duration = Duration.ofHours(1)
-    fun eligible(data: PlanningData, preferences: ReminderPreferences, zone: ZoneId): List<PlanReminder> = buildList {
+    fun eligible(data: PlanningData, preferences: ReminderPreferences, zone: ZoneId, displayClock: com.ventures814.brdcrmbs.preferences.ClockFormat = com.ventures814.brdcrmbs.preferences.ClockFormat()): List<PlanReminder> = buildList {
         fun addIf(type: ReminderType, id: String, at: Instant, title: String, body: String) {
             if (type in preferences.enabled) add(PlanReminder("${type.name}:$id", type, at, title, body))
         }
         data.fasting.filter { it.outcome == FastingOutcome.PLANNED }.forEach {
             val label = it.preset ?: "Custom"
-            val end = it.end.atZone(it.zone).format(DateTimeFormatter.ofPattern("MMM d, h:mm a"))
+            val end = it.end.atZone(it.zone).format(displayClock.formatter("MMM d, "))
             addIf(ReminderType.FAST_START, it.id, it.start, "Fasting starts now", "$label · Ends $end · ${it.zone.id}")
             addIf(ReminderType.FAST_END, it.id, it.end, "Fasting complete", "Your planned $label fast ends now.")
         }
@@ -64,7 +63,8 @@ class ReminderReconciler(private val backend: ReminderBackend) {
         desired.values.forEach { if (it.at > now && (recovery || old[it.key] != it)) backend.schedule(it) }
     }
 
-    fun deliver(key: String, trigger: Instant, eligible: List<PlanReminder>, now: Instant, allowed: Boolean): Boolean {
+    fun deliver(key: String, trigger: Instant, eligible: List<PlanReminder>, now: Instant, allowed: Boolean,
+        present: (PlanReminder) -> PlanReminder = { it }): Boolean {
         val pending = backend.pending()[key] ?: return false
         if (pending.at != trigger) return false // A replaced alarm must not cancel its replacement.
         val current = eligible.firstOrNull { it.key == key && it.at == trigger }
@@ -73,7 +73,7 @@ class ReminderReconciler(private val backend: ReminderBackend) {
         }
         // Record consumption first: process death cannot cause a duplicate notification.
         backend.markDelivered(current)
-        backend.post(current)
+        backend.post(present(current))
         backend.cancel(key)
         return true
     }

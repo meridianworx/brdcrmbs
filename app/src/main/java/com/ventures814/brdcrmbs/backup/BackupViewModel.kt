@@ -7,12 +7,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 enum class BackupDocumentRequest { CREATE, OPEN }
-data class BackupPreview(val createdAt: String, val records: Int)
+data class BackupPreview(val createdAt: java.time.Instant, val records: Int)
 data class BackupUiState(val busy: Boolean = false, val request: BackupDocumentRequest? = null,
     val filename: String = "", val preview: BackupPreview? = null, val message: String? = null, val failed: Boolean = false)
 
@@ -52,9 +49,7 @@ class BackupViewModel(private val operations: BackupOperations) : ViewModel() {
         launch({
             candidate = operations.read(uri)
             val snapshot = checkNotNull(candidate)
-            val created = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
-                .withZone(ZoneId.systemDefault()).format(snapshot.createdAt)
-            mutable.value = BackupUiState(preview = BackupPreview(created, snapshot.count))
+            mutable.value = BackupUiState(preview = BackupPreview(snapshot.createdAt, snapshot.count))
         }, "Could not read a supported, complete brdcrmbs backup. Your current data is unchanged.")
     }
     fun cancelRestore() { if (!state.value.busy) { candidate = null; mutable.value = BackupUiState(message = "Restore cancelled.") } }

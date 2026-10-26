@@ -52,7 +52,7 @@ fun BackupScreen(modifier: Modifier = Modifier, back: () -> Unit, model: BackupV
             }
             Text("Backup & Restore", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.semantics { heading() })
         }
-        Text("Keep a portable copy of your plans, history, saved meals, saved activities and reminder choices.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Keep a portable copy of your plans, history, saved meals, saved activities, reminder choices and app preferences.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("Create a backup", style = MaterialTheme.typography.titleMedium)
@@ -63,7 +63,7 @@ fun BackupScreen(modifier: Modifier = Modifier, back: () -> Unit, model: BackupV
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("Restore a backup", style = MaterialTheme.typography.titleMedium)
-                Text("Select a backup to validate and review. Restoring replaces current plans, history, saved items and reminder choices; it does not merge them.")
+                Text("Select a backup to validate and review. Restoring replaces current plans, history, saved items, reminder choices and app preferences; it does not merge them.")
                 OutlinedButton(onClick = model::open, enabled = !state.busy, modifier = Modifier.fillMaxWidth().testTag("openBackup")) { Text("Restore Backup") }
             }
         }
@@ -80,8 +80,8 @@ fun BackupScreen(modifier: Modifier = Modifier, back: () -> Unit, model: BackupV
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
             title = { Text("Replace current data?") },
             text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Backup created ${preview.createdAt}")
-                Text("${preview.records} records. This replaces all current brdcrmbs plans, history, saved items and reminder choices. Current data will not be merged or kept. Create a backup first if you want to keep it.")
+                Text("Backup created ${com.ventures814.brdcrmbs.ui.settings.LocalClockFormat.current.formatter("MMM d, yyyy · ").withZone(java.time.ZoneId.systemDefault()).format(preview.createdAt)}")
+                Text("${preview.records} records. This replaces all current brdcrmbs plans, history, saved items, reminder choices and app preferences. Current data will not be merged or kept. Create a backup first if you want to keep it.")
             } },
             confirmButton = { TextButton(onClick = model::restore, enabled = !state.busy, modifier = Modifier.testTag("confirmRestoreBackup")) { Text(if (state.busy) "Restoring…" else "Replace & Restore") } },
             dismissButton = { TextButton(onClick = model::cancelRestore, enabled = !state.busy) { Text("Cancel") } })

@@ -25,11 +25,12 @@ fun presentWeek(
     selectedDay: Int,
     plans: PlanningData,
     zone: ZoneId,
-    locale: Locale = Locale.getDefault()
+    locale: Locale = Locale.getDefault(),
+    clockFormat: com.ventures814.brdcrmbs.preferences.ClockFormat = com.ventures814.brdcrmbs.preferences.ClockFormat()
 ): WeekUiState {
     val date = range.start.plusDays(selectedDay.toLong())
     val dayPlans = plans.forDay(date, zone)
-    val time = DateTimeFormatter.ofPattern("h:mm a", locale)
+    val time = clockFormat.formatter(locale = locale)
     val monthDay = DateTimeFormatter.ofPattern("MMM d", locale)
     val fullDate = DateTimeFormatter.ofPattern("MMM d, yyyy", locale)
     val dayName = DateTimeFormatter.ofPattern("EEE", locale)

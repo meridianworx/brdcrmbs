@@ -14,7 +14,7 @@
     <string name="settings_management">Data Management</string>
     <string name="settings_management_help">Manage app data</string>
     <string name="settings_preferences">App Preferences</string>
-    <string name="settings_preferences_help">Appearance, time format and planning defaults</string>
+    <string name="settings_preferences_help">Time format and planning defaults</string>
     <string name="settings_about">About</string>
     <string name="settings_about_help">brdcrmbs information</string>
     <string name="settings_later">Coming in a later milestone</string>
