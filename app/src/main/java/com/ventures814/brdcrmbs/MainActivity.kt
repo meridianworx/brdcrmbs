@@ -19,6 +19,14 @@ class MainActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
         )
-        setContent { BrdcrmbsTheme { BrdcrmbsApp() } }
+        val feedback = intent.getStringExtra("dataResetFeedback")
+        intent.removeExtra("dataResetFeedback")
+        setContent { BrdcrmbsTheme { BrdcrmbsApp(resetApplicationUi = { message ->
+            // A fresh Activity/task discards ALL retained/restorable UI state, not the app process.
+            // Room/SharedPreferences have already committed; ordinary Clear uses live observers.
+            startActivity(android.content.Intent(this, MainActivity::class.java)
+                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                .putExtra("dataResetFeedback", message))
+        }, initialFeedback = feedback) } }
     }
 }

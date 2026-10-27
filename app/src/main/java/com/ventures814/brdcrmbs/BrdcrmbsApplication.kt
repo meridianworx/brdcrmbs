@@ -17,7 +17,11 @@ class BrdcrmbsApplication : Application() {
             com.ventures814.brdcrmbs.data.RoomBackupStore(planningDatabase, reminderSettings, appPreferences), reminderSettings,
             contentResolver, java.io.File(noBackupFilesDir, "restore-preferences-journal.json"),
             { reminders.reconcile(recovery = true) }, { action -> reminders.withRestoreBoundary(action) },
-            restoreBoundary = reminders::restoreAndReconcile
+            restoreBoundary = reminders::restoreAndReconcile,
+            cleanupDataRuntime = { reset ->
+                reminderBackend.clearDataRuntime()
+                if (reset) reminderSettings.resetPermissionHistory()
+            }
         )
     }
     override fun onCreate() {

@@ -11,6 +11,17 @@ import java.time.Instant
 class RoomBackupStore(private val database: PlanningDatabase, private val settings: ReminderSettingsStore,
     val appPreferences: com.ventures814.brdcrmbs.preferences.AppPreferencesStore? = null) {
     private val dao = database.planningDao()
+    /** Configuration/library-only target; clearing must not depend on exporting old history. */
+    suspend fun withoutPlanning(at: Instant): BackupSnapshot = database.withTransaction {
+        BackupSnapshot(at, savedMeals = dao.savedMeals().map { it.model() },
+            savedActivities = dao.savedActivities().map { it.model() }, reminders = settings.state.value,
+            appPreferences = appPreferences?.state?.value ?: com.ventures814.brdcrmbs.preferences.AppPreferences())
+    }
+
+    suspend fun clearPlanning() = database.withTransaction {
+        // One DELETE statement removes the entire self-referencing activity set, including children.
+        dao.restoreClearActivities(); dao.restoreClearMeals(); dao.restoreClearFasting(); dao.restoreClearNoFast()
+    }
     suspend fun snapshot(at: Instant, excludeQa: Boolean = true): BackupSnapshot = database.withTransaction {
         fun keep(id: String) = !excludeQa || !isBackupQaOwned(id)
         BackupSnapshot(at, PlanningData(

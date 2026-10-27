@@ -39,7 +39,7 @@ private fun rememberSettingsModel(): SettingsViewModel {
 }
 
 @Composable
-fun SettingsScreen(modifier: Modifier = Modifier, model: SettingsViewModel = rememberSettingsModel(), onEditorVisible: (Boolean) -> Unit = {}) {
+fun SettingsScreen(modifier: Modifier = Modifier, model: SettingsViewModel = rememberSettingsModel(), onEditorVisible: (Boolean) -> Unit = {}, onResetComplete: (String) -> Unit = {}) {
     val page by model.page.collectAsStateWithLifecycle()
     val draft by model.draft.collectAsStateWithLifecycle()
     val library by model.library.collectAsStateWithLifecycle()
@@ -50,6 +50,7 @@ fun SettingsScreen(modifier: Modifier = Modifier, model: SettingsViewModel = rem
     DisposableEffect(Unit) { onDispose { onEditorVisible(false) } }
     BackHandler(enabled = child) { model.back() }
     when {
+        page == SettingsPage.DATA_MANAGEMENT -> DataManagementScreen(modifier, model::back, { message -> model.back(); onResetComplete(message) })
         page == SettingsPage.PREFERENCES -> AppPreferencesScreen(modifier, model::back)
         page == SettingsPage.BACKUP -> BackupScreen(modifier, model::back)
         page == SettingsPage.REMINDERS -> RemindersScreen(modifier, model::back)
@@ -75,7 +76,7 @@ private fun SettingsHome(modifier: Modifier, open: (SettingsPage) -> Unit) {
         SettingsGroup(R.string.settings_data) {
             SettingsRow(R.string.settings_backup, R.string.settings_backup_help, R.drawable.ic_week) { open(SettingsPage.BACKUP) }
             HorizontalDivider()
-            SettingsRow(R.string.settings_management, R.string.settings_management_help, R.drawable.ic_settings)
+            SettingsRow(R.string.settings_management, R.string.settings_management_help, R.drawable.ic_settings) { open(SettingsPage.DATA_MANAGEMENT) }
         }
         SettingsGroup(R.string.settings_app) {
             SettingsRow(R.string.settings_preferences, R.string.settings_preferences_help, R.drawable.ic_settings) { open(SettingsPage.PREFERENCES) }

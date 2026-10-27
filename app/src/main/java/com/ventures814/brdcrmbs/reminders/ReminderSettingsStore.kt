@@ -24,6 +24,8 @@ class ReminderSettingsStore(context: Context, name: String = "reminder_preferenc
         mutable.value = read()
     }
     suspend fun markAsked() = withContext(Dispatchers.IO) { check(permission.edit().putBoolean("permissionAsked", true).commit()) }
+    /** App-owned prompt history only; never changes Android permission/channel settings. */
+    suspend fun resetPermissionHistory() = withContext(Dispatchers.IO) { check(permission.edit().clear().commit()) }
     suspend fun set(type: ReminderType, on: Boolean) = withContext(Dispatchers.IO) {
         check(prefs.edit().putBoolean(type.name, on).commit()) { "Could not save reminder preference" }
         mutable.value = read()

@@ -4,6 +4,9 @@ import android.content.ContentResolver
 import android.net.Uri
 import android.util.AtomicFile
 import com.ventures814.brdcrmbs.data.RoomBackupStore
+import com.ventures814.brdcrmbs.data.DataAction
+import com.ventures814.brdcrmbs.data.DataManagementOperations
+import com.ventures814.brdcrmbs.data.DataManagementResult
 import com.ventures814.brdcrmbs.reminders.*
 import java.io.File
 import java.time.Clock
@@ -40,8 +43,9 @@ class BackupService(
     private val restoreBoundary: suspend (suspend () -> Unit) -> Boolean = { action ->
         boundary { action() }
         runCatching { reconcile() }.isSuccess
-    }
-) : BackupOperations {
+    },
+    private val cleanupDataRuntime: suspend (Boolean) -> Unit = {}
+) : BackupOperations, DataManagementOperations {
     private val mutex = Mutex()
     private val journal = AtomicFile(journalFile)
     private fun hasJournal() = journal.baseFile.exists() || File(journal.baseFile.path + ".bak").exists()
@@ -101,6 +105,35 @@ class BackupService(
     /** Called before application reminder observation/recovery starts, and before subsequent backups. */
     suspend fun recover() = withContext(Dispatchers.IO) { mutex.withLock { recoverLocked() } }
 
+    /** Explicit confirmed destructive actions share restore serialization and cross-store recovery. */
+    override suspend fun manageData(action: DataAction): DataManagementResult = withContext(Dispatchers.IO) { mutex.withLock {
+        withContext(NonCancellable) {
+            var runtimeCleaned = true
+            val reconciled = restoreBoundary {
+                recoverLocked()
+                val reset = action == DataAction.RESET_APP
+                val target = if (reset) BackupSnapshot(clock.instant()) else store.withoutPlanning(clock.instant())
+                val before = settings.state.value
+                val beforeApp = store.appPreferences?.state?.value ?: com.ventures814.brdcrmbs.preferences.AppPreferences()
+                writeJournal(before, target.reminders, digest(target), beforeApp, target.appPreferences, action)
+                try {
+                    if (reset) store.replace(target) else store.clearPlanning()
+                } catch (failure: Exception) {
+                    if (reset) {
+                        settings.replaceForRestore(before)
+                        store.appPreferences?.replace(beforeApp)
+                    }
+                    journal.delete()
+                    throw failure
+                }
+                // Data has committed. Retain the journal if cleanup fails: startup/retry finishes it.
+                runtimeCleaned = runCatching { cleanupDataRuntime(reset) }.isSuccess
+                if (runtimeCleaned) journal.delete()
+            }
+            DataManagementResult(runtimeCleaned && reconciled)
+        }
+    } }
+
     private suspend fun recoverLocked() {
         if (!hasJournal()) return
         val saved = journal.openRead().bufferedReader(Charsets.UTF_8).use { JSONObject(it.readText()) }
@@ -113,16 +146,21 @@ class BackupService(
         settings.replaceForRestore(preferences(side))
         store.appPreferences?.replace(if (saved.has("${side}App")) BackupCodec.decodePreferences(saved.getJSONObject("${side}App"))
             else com.ventures814.brdcrmbs.preferences.AppPreferences())
+        if (side == "after" && saved.has("dataAction")) {
+            cleanupDataRuntime(DataAction.valueOf(saved.getString("dataAction")) == DataAction.RESET_APP)
+        }
         journal.delete()
     }
 
     private fun writeJournal(before: ReminderPreferences, after: ReminderPreferences, target: String,
-        beforeApp: com.ventures814.brdcrmbs.preferences.AppPreferences, afterApp: com.ventures814.brdcrmbs.preferences.AppPreferences) {
+        beforeApp: com.ventures814.brdcrmbs.preferences.AppPreferences, afterApp: com.ventures814.brdcrmbs.preferences.AppPreferences,
+        action: DataAction? = null) {
         journal.baseFile.parentFile?.mkdirs()
         val text = JSONObject().put("target", target)
             .put("before", JSONArray(before.enabled.sortedBy { it.name }.map { it.name }))
             .put("after", JSONArray(after.enabled.sortedBy { it.name }.map { it.name }))
-            .put("beforeApp", BackupCodec.encodePreferences(beforeApp)).put("afterApp", BackupCodec.encodePreferences(afterApp)).toString()
+            .put("beforeApp", BackupCodec.encodePreferences(beforeApp)).put("afterApp", BackupCodec.encodePreferences(afterApp))
+            .apply { if (action != null) put("dataAction", action.name) }.toString()
         val output = journal.startWrite()
         try { output.write(text.toByteArray(Charsets.UTF_8)); journal.finishWrite(output) }
         catch (failure: Exception) { journal.failWrite(output); throw failure }

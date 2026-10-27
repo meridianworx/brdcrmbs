@@ -8,11 +8,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -25,6 +28,8 @@ import com.ventures814.brdcrmbs.ui.screens.SettingsScreen
 import com.ventures814.brdcrmbs.ui.today.TodayRoute
 import com.ventures814.brdcrmbs.ui.week.WeekRoute
 import com.ventures814.brdcrmbs.ui.theme.BrdcrmbsTheme
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import kotlinx.coroutines.launch
 
 private enum class Destination(@param:StringRes val label: Int, @param:DrawableRes val icon: Int) {
     Today(R.string.nav_today, R.drawable.ic_today),
@@ -34,18 +39,23 @@ private enum class Destination(@param:StringRes val label: Int, @param:DrawableR
 }
 
 @Composable
-fun BrdcrmbsApp() {
-    com.ventures814.brdcrmbs.ui.settings.TimePresentation { BrdcrmbsContent() }
+fun BrdcrmbsApp(resetApplicationUi: ((String) -> Unit)? = null, initialFeedback: String? = null) {
+    com.ventures814.brdcrmbs.ui.settings.TimePresentation { BrdcrmbsContent(resetApplicationUi, initialFeedback) }
 }
 
 @Composable
-private fun BrdcrmbsContent() {
+private fun BrdcrmbsContent(resetApplicationUi: ((String) -> Unit)?, initialFeedback: String?) {
     var selected by rememberSaveable { mutableStateOf(Destination.Today) }
     var editorVisible by remember { mutableStateOf(false) }
     var resetWeekRequested by remember { mutableStateOf(false) }
     var resetProgressRequested by remember { mutableStateOf(false) }
+    val owner = LocalViewModelStoreOwner.current
+    val snackbars = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    androidx.compose.runtime.LaunchedEffect(Unit) { initialFeedback?.let { snackbars.showSnackbar(it) } }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbars) },
         bottomBar = {
             if (!editorVisible) NavigationBar {
                 Destination.entries.forEach { destination ->
@@ -70,7 +80,15 @@ private fun BrdcrmbsContent() {
                 resetToTodayRequested = resetWeekRequested, onResetHandled = { resetWeekRequested = false })
             Destination.Progress -> ProgressRoute(screenModifier, resetToTodayRequested = resetProgressRequested,
                 onResetHandled = { resetProgressRequested = false })
-            Destination.Settings -> SettingsScreen(screenModifier, onEditorVisible = { editorVisible = it })
+            Destination.Settings -> SettingsScreen(screenModifier, onEditorVisible = { editorVisible = it }, onResetComplete = { message ->
+                if (resetApplicationUi != null) resetApplicationUi(message)
+                else {
+                    owner?.viewModelStore?.clear()
+                    resetWeekRequested = false; resetProgressRequested = false
+                    selected = Destination.Today; editorVisible = false
+                    scope.launch { snackbars.showSnackbar(message) }
+                }
+            })
         }
     }
 }

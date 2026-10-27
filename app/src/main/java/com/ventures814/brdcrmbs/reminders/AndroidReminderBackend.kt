@@ -61,6 +61,17 @@ class AndroidReminderBackend(private val context: Context, runtimeName: String =
     override fun markDelivered(reminder: PlanReminder) {
         check(ledger.edit().putLong("delivered:${reminder.key}", reminder.at.toEpochMilli()).commit())
     }
+    /** Only called under the coordinator's destructive-data boundary after the data commit. */
+    fun clearDataRuntime() {
+        pending().keys.forEach(::cancel)
+        // Includes already-posted reminders whose pending registration has been consumed.
+        notifications.activeNotifications.filter {
+            if (Build.VERSION.SDK_INT >= 26) it.notification.channelId == CHANNEL
+            else ReminderType.entries.any { type -> it.tag?.startsWith("${type.name}:") == true }
+        }
+            .forEach { notifications.cancel(it.tag, it.id) }
+        check(ledger.edit().clear().commit())
+    }
     fun tapIntent(): Intent = Intent(context, MainActivity::class.java)
         .setAction(ACTION_OPEN_TODAY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
     fun notification(reminder: PlanReminder): Notification = NotificationCompat.Builder(context, CHANNEL)
