@@ -9,7 +9,7 @@
 - **Package name:** com.ventures814.brdcrmbs (namespace and application ID)
 - **Platform:** Android
 - **Repository:** https://github.com/meridianworx/brdcrmbs.git (origin; primary branch main)
-- **Development stage:** Week, Today adherence, Progress, Settings foundation, saved libraries, Reminders, fasting plan integrity, Today active-fasting progress presentation and Backup & Restore are physically accepted/LOCKED. The launcher icon is physically accepted/LOCKED. App Preferences is physically accepted/LOCKED. Data Management is the current controlled milestone. Overall Settings is not complete.
+- **Development stage:** Week, Today adherence, Progress, Settings foundation, saved libraries, Reminders, fasting plan integrity, Today active-fasting progress presentation and Backup & Restore are physically accepted/LOCKED. The launcher icon is physically accepted/LOCKED. App Preferences is physically accepted/LOCKED. Data Management is physically accepted/LOCKED. Developer / Testing visibility is the current small cleanup milestone. Overall Settings is not complete.
 
 # Purpose
 
@@ -218,7 +218,7 @@ Android foundation implemented:
 
 ## In Progress
 
-- Data Management implementation and emulator validation completed: Clear Planning & History and Reset App Data only; physical-device Product Owner acceptance PENDING / NOT LOCKED. App Preferences passed Product Owner physical-device testing ("looks good") and is APPROVED / ACCEPTED / LOCKED. Launcher icon and Backup & Restore passed Product Owner physical-device review ("looks good") and are APPROVED / ACCEPTED / LOCKED; earlier pending notes are historical.
+- Developer / Testing is hidden from normal Settings; implementation, automated validation and emulator visual review are complete, awaiting Product Owner review. Data Management passed Product Owner physical-device testing ("looks good") and is APPROVED / ACCEPTED / LOCKED. App Preferences passed Product Owner physical-device testing ("looks good") and is APPROVED / ACCEPTED / LOCKED. Launcher icon and Backup & Restore passed Product Owner physical-device review ("looks good") and are APPROVED / ACCEPTED / LOCKED; earlier pending notes are historical.
 
 ## Planned
 
@@ -366,11 +366,13 @@ Approved scope is exactly:
 - Default Fasting Preset: No default (initial), or an existing canonical duration/OMAD preset; Custom and No fast are not reusable defaults. No default retains the existing 16:8 draft initialization without applying a user override.
 - Default Meal Count: 1–6, initially 3. Persist/display only in the current planner: meals are added individually, with no slot/count initialization. Behavioral consumption is deferred; do not invent a meal-slot model.
 
-Monday-first Week and the approved dark theme remain locked/non-configurable. Notification controls remain under Reminders. Developer / Testing hiding is deferred to Final Cleanup.
+Monday-first Week and the approved dark theme remain locked/non-configurable. Notification controls remain under Reminders. Developer / Testing is intentionally hidden from normal debug/release Settings; its tooling remains implemented in debug sources.
 
 Do not add measurement/unit settings unless an implemented feature actually needs them.
 
 # Locked Decisions
+
+- Product Owner physically tested Data Management and said "looks good" (2026-10-27). Clear Planning & History, Reset App Data, preservation/reset boundaries, confirmations, reminder cleanup and recovery are APPROVED / ACCEPTED / LOCKED. Earlier pending acceptance notes are historical.
 
 - Product Owner physically tested App Preferences and said "looks good" (2026-10-26). Time Format, new-draft fasting default, meal-count persistence/deferred consumption, backup integration and navigation are APPROVED / ACCEPTED / LOCKED. Earlier pending acceptance notes are historical.
 
@@ -463,7 +465,7 @@ Today active fasting visual source of truth: docs/design/today-active-fasting-ap
 # Known Issues
 
 - Week, Today adherence and corrected Progress passed physical-device Product Owner acceptance and are approved/locked. That historical populated Progress review included mixed statuses, meal fractions, full Day Detail and legacy overlapping fasting. New fasting writes now follow the locked integrity rule; existing historical records remain readable. Earlier visual divergence is resolved; the approved reference remains at docs/design/progress-approved-screen-3.png.
-- Data Management physical-device Product Owner acceptance remains pending. App Preferences, launcher icon and Backup & Restore are accepted/LOCKED; earlier pending notes are historical.
+- Data Management, App Preferences, launcher icon and Backup & Restore are accepted/LOCKED; earlier pending notes are historical.
 
 # Backlog
 
@@ -477,9 +479,9 @@ Future health measurements must not automatically control the user's plan.
 
 # Current Development Focus
 
-Data Management implementation and validation are complete. Await Product Owner physical-device acceptance (PENDING / NOT LOCKED); stop development at this checkpoint. Preserve all locked features, including App Preferences. About, Developer / Testing hiding, final cleanup and release preparation/signing/distribution remain deferred; do not begin them in this task.
+Developer / Testing visibility cleanup is implemented and validated; await Product Owner review. Normal debug/release Settings hides the section; all debug-only tooling and direct tests remain retained. Preserve all locked features, including accepted Data Management. About, Final Cleanup & QA, release preparation/signing/distribution remain pending; do not begin them.
 
-Debug builds provide Settings → Developer / Testing → Progress Test Data for repeatable physical-device QA of Week, Today and Progress, plus Seed Active Fast for current-instant Today visual testing. Both scenarios use the production fasting-integrity boundary and safely reject conflicts. Reset Test Data removes only exact QA-owned records, preserving genuine plans/history and saved libraries. This is development tooling, not product Settings functionality; source-set release isolation must be preserved.
+Debug sources retain the detached SettingsDevelopmentContent, Progress Test Data and Seed Active Fast tooling for controlled future re-enabling. Normal debug Settings intentionally does not render these controls or Reminder diagnostics. Both scenarios use the production fasting-integrity boundary and safely reject conflicts. Reset Test Data removes only exact QA-owned records, preserving genuine plans/history and saved libraries. This is development tooling, not product Settings functionality; source-set release isolation must be preserved.
 
 # Recent Milestones
 
@@ -909,3 +911,18 @@ Debug builds provide Settings → Developer / Testing → Progress Test Data for
 - Debug and release lint each report 0 errors / 11 existing warnings: redundant activity label, seven unused starter colors and three dependency-update notices. The existing reminder instrumentation deprecation is non-blocking. Earlier new-test selector/input failures and the genuine Clear snackbar lifecycle correction are documented above with separate failed/passing evidence; no failure is hidden. The cold-boot System UI ANR happened before tests, was dismissed, and required no production workaround. The completed final suite had no failures or skips.
 - Final reports are preserved under ignored app/build/data-management-review/final-full-166-passed; 17 native captures and the exact changed-file inventory remain in the same ignored review directory. The task emulator was already closed when final validation was recovered; no physical phone was targeted. Final APK inspection again confirms QA seeder/tool classes only in debug, Data Management in both variants. All existing debug QA controls remain retained.
 - Final scope review: exactly 17 changed/new files; no schema/entity/migration/dependency/launcher/resource/debug/release source-set change. Room remains version 4. All requested implementation, regression, recovery, native visual review and build/lint checks are complete. App Preferences remains APPROVED / ACCEPTED / LOCKED. Data Management remains physical-device Product Owner acceptance PENDING / NOT APPROVED / NOT LOCKED. About, Developer / Testing hiding, final cleanup, release preparation, signing and distribution have not begun. Stop and await Product Owner testing after publishing this checkpoint.
+
+## Hide Developer / Testing — 2026-10-27
+
+- Started from clean main / origin/main e7a0f4f (Implement data management). Product Owner physically tested Data Management and said looks good; it is APPROVED / ACCEPTED / LOCKED.
+- Removed only the normal SettingsHome call to SettingsDevelopmentContent. No placeholder, group, spacing or alternative access path replaces it. Both debug and release Settings therefore omit the developer section.
+- Retained the existing debug composable, Progress and Active Fast seeders, confirmations, exact QA ownership/reset safeguards, Reminder diagnostics/Reconcile action and release no-op counterpart without rewriting them or moving them into main. Direct tooling tests remain; the former visible-Settings integration test now mounts the retained extension explicitly. Added normal-debug absence coverage and extended existing six-destination Settings/Back navigation checks.
+- Room remains version 4; no schema/migration/dependency or locked feature behavior change. Validation and emulator visual review completed as recorded below. About, Final Cleanup & QA, release preparation/signing/distribution remain pending; this is not full Final Cleanup.
+
+- Wrapper validation passed debug build, unsigned release build, Android test compilation, all 84 JVM tests (0 failures/errors/skips), debug lint and release lint (each 0 errors / 11 existing warnings), BUILD SUCCESSFUL in 8m 49s. Focused Settings/developer visibility, QA seeder/UI and reminder validation passed 30/30, 0 failures/errors/skips. Includes six Settings UI tests, fifteen QA tests and nine reminder tests. Direct extension mounting retained prior seed/reset confirmation and cancellation assertions; no unrelated assertion was weakened.
+- APK DEX inspection confirms nine checked QA/diagnostics symbols and labels remain present in debug and absent in release, including ProgressQaSeeder, ActiveFastQaOwnership, QaToolsModel, all seed/reset controls, Reminder diagnostics and Reconcile reminders now. Both variants use the same SettingsHome with its developer-content attachment removed. Existing debug implementation/release counterpart are byte-for-byte unchanged.
+- Cold boot showed the recurring com.android.systemui ANR, captured under ignored app/build/developer-visibility-review/startup.png/XML and dismissed before tests. Focused tests passed afterward with no app workaround. Full emulator regression and final native Settings visual review are in progress.
+
+- Full final-source Pixel_6_Pro API 37 / Android 17 emulator regression passed 167/167 in one uninterrupted run, 0 failures / 0 errors / 0 skipped, UTP exit code 0; wrapper BUILD SUCCESSFUL in 12m 6s, test execution 707.645 seconds. All existing 166 tests remain represented, with the previous developer attachment test redirected to the retained composable plus one new normal-Settings absence test. All 30 focused cases passed again inside the full run. No failed test, rerun, disabled assertion or production workaround was needed in this milestone.
+- Native emulator visual review opened the same tested debug APK, inspected normal Settings from top through the final philosophy footer, and verified no Developer / Testing heading, QA/diagnostic controls, blank card, leftover separator or excessive trailing spacing. Production groups and bottom navigation remain unchanged; About remains inactive with its existing later-milestone label. Saved Meals / Saved Activities / Reminders / Backup & Restore / App Preferences / Data Management opening, hidden child navigation and Back restoring Settings passed in the extended navigation test. Captures/XML and focused/full reports remain ignored under app/build/developer-visibility-review.
+- Final scope is four files: SettingsScreen.kt, SettingsUiTest.kt, SettingsDebugUiTest.kt and PROJECT_STATE.md. Seeder/scenario/ownership/reset/diagnostic sources and release counterpart are unchanged; no schema, migration, dependency, launcher or other locked feature change. Room remains version 4. Data Management and App Preferences remain APPROVED / ACCEPTED / LOCKED. This visibility cleanup awaits Product Owner review. About, Final Cleanup & QA and release preparation remain pending. Stop after commit/push; do not start another milestone.

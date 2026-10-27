@@ -84,7 +84,7 @@ private fun SettingsHome(modifier: Modifier, open: (SettingsPage) -> Unit) {
             SettingsRow(R.string.settings_about, R.string.settings_about_help, R.drawable.ic_today)
         }
         Text(stringResource(R.string.product_philosophy), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        SettingsDevelopmentContent()
+        // Developer tooling remains in src/debug, intentionally detached from normal Settings.
     }
 }
 
