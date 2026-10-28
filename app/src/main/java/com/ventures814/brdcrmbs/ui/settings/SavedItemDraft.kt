@@ -4,7 +4,7 @@ import com.ventures814.brdcrmbs.domain.*
 import java.io.Serializable
 import java.util.UUID
 
-enum class SettingsPage { HOME, MEALS, ACTIVITIES, REMINDERS, BACKUP, PREFERENCES, DATA_MANAGEMENT }
+enum class SettingsPage { HOME, MEALS, ACTIVITIES, REMINDERS, BACKUP, PREFERENCES, DATA_MANAGEMENT, ABOUT }
 
 /** Reusable library details only; no schedule, outcome or connection to a planned item. */
 data class SavedItemDraft(

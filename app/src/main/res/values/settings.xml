@@ -17,6 +17,8 @@
     <string name="settings_preferences_help">Time format and planning defaults</string>
     <string name="settings_about">About</string>
     <string name="settings_about_help">brdcrmbs information</string>
+    <string name="about_purpose">brdcrmbs helps you plan and follow your own fasting, meals, and workouts / activities, then review how closely you followed your plan.</string>
+    <string name="about_version">Version %1$s</string>
     <string name="settings_later">Coming in a later milestone</string>
     <string name="settings_back">Back</string>
     <string name="settings_add_meal">Add Saved Meal</string>

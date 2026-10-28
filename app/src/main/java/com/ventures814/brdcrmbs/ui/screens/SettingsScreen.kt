@@ -50,6 +50,7 @@ fun SettingsScreen(modifier: Modifier = Modifier, model: SettingsViewModel = rem
     DisposableEffect(Unit) { onDispose { onEditorVisible(false) } }
     BackHandler(enabled = child) { model.back() }
     when {
+        page == SettingsPage.ABOUT -> AboutScreen(modifier, model::back)
         page == SettingsPage.DATA_MANAGEMENT -> DataManagementScreen(modifier, model::back, { message -> model.back(); onResetComplete(message) })
         page == SettingsPage.PREFERENCES -> AppPreferencesScreen(modifier, model::back)
         page == SettingsPage.BACKUP -> BackupScreen(modifier, model::back)
@@ -81,7 +82,7 @@ private fun SettingsHome(modifier: Modifier, open: (SettingsPage) -> Unit) {
         SettingsGroup(R.string.settings_app) {
             SettingsRow(R.string.settings_preferences, R.string.settings_preferences_help, R.drawable.ic_settings) { open(SettingsPage.PREFERENCES) }
             HorizontalDivider()
-            SettingsRow(R.string.settings_about, R.string.settings_about_help, R.drawable.ic_today)
+            SettingsRow(R.string.settings_about, R.string.settings_about_help, R.drawable.ic_today) { open(SettingsPage.ABOUT) }
         }
         Text(stringResource(R.string.product_philosophy), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         // Developer tooling remains in src/debug, intentionally detached from normal Settings.
@@ -118,6 +119,33 @@ private fun ChildHeader(title: String, back: () -> Unit, enabled: Boolean = true
             Icon(painterResource(R.drawable.ic_chevron), stringResource(R.string.settings_back), Modifier.rotate(180f))
         }
         Text(title, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.semantics { heading() })
+    }
+}
+
+@Composable
+private fun AboutScreen(modifier: Modifier, back: () -> Unit) {
+    val context = LocalContext.current
+    val version = remember(context) {
+        val info = if (android.os.Build.VERSION.SDK_INT >= 33) {
+            context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.PackageInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            context.packageManager.getPackageInfo(context.packageName, 0)
+        }
+        info.versionName ?: "—"
+    }
+    Column(modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        ChildHeader(stringResource(R.string.settings_about), back)
+        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.primary)
+        Text(stringResource(R.string.about_purpose), style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+            Text(stringResource(R.string.product_philosophy), style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(16.dp))
+        }
+        Text(stringResource(R.string.about_version, version), style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

@@ -64,7 +64,7 @@ class SettingsUiTest {
         compose.onNodeWithText("No saved activities yet.").assertIsDisplayed()
         back()
         compose.onNodeWithText("Backup & Restore").performScrollTo().assertExists()
-        compose.onAllNodesWithText("Coming in a later milestone").assertCountEquals(1)
+        compose.onAllNodesWithText("Coming in a later milestone").assertCountEquals(0)
         click("Backup & Restore")
         compose.onNodeWithTag("createBackup").assertIsDisplayed()
         compose.onNode(isSelectable() and hasText("Settings")).assertDoesNotExist()
@@ -86,7 +86,11 @@ class SettingsUiTest {
         compose.onNode(isSelectable() and hasText("Settings")).assertDoesNotExist()
         compose.onNodeWithContentDescription("Back to Settings").performClick()
         compose.onNode(isSelectable() and hasText("Settings")).assertIsSelected()
-        compose.onNodeWithText("About").performScrollTo().assertHasNoClickAction()
+        compose.onNodeWithText("About").performScrollTo().assertHasClickAction().performClick()
+        compose.onNodeWithText("brdcrmbs").assertIsDisplayed()
+        compose.onNode(isSelectable() and hasText("Settings")).assertDoesNotExist()
+        back()
+        compose.onNode(isSelectable() and hasText("Settings")).assertIsSelected()
         assertEquals(SettingsPage.HOME, model.page.value)
     }
 
