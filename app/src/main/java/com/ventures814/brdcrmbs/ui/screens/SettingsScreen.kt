@@ -98,17 +98,16 @@ private fun SettingsGroup(@StringRes title: Int, content: @Composable ColumnScop
 }
 
 @Composable
-private fun SettingsRow(@StringRes title: Int, @StringRes subtitle: Int, @DrawableRes icon: Int, onClick: (() -> Unit)? = null) {
+private fun SettingsRow(@StringRes title: Int, @StringRes subtitle: Int, @DrawableRes icon: Int, onClick: () -> Unit) {
     ListItem(
         headlineContent = { Text(stringResource(title)) },
         supportingContent = { Column {
             Text(stringResource(subtitle), style = MaterialTheme.typography.bodySmall)
-            if (onClick == null) Text(stringResource(R.string.settings_later), style = MaterialTheme.typography.labelSmall)
         } },
         leadingContent = { Icon(painterResource(icon), null, tint = MaterialTheme.colorScheme.primary) },
-        trailingContent = { if (onClick != null) Icon(painterResource(R.drawable.ic_chevron), null) },
+        trailingContent = { Icon(painterResource(R.drawable.ic_chevron), null) },
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+        modifier = Modifier.clickable(onClick = onClick)
     )
 }
 

@@ -83,10 +83,10 @@ fun DataManagementScreen(modifier: Modifier = Modifier, back: () -> Unit, resetC
         val reset = action == DataAction.RESET_APP
         AlertDialog(onDismissRequest = model::cancel, containerColor = MaterialTheme.colorScheme.surfaceVariant,
             title = { Text(if (reset) { if (state.finalReset) "Permanently reset app data?" else "Reset App Data?" } else "Clear Planning & History?") },
-            text = { Text(if (reset) {
+            text = { key(action, state.finalReset) { Column(Modifier.verticalScroll(rememberScrollState())) { Text(if (reset) {
                 if (state.finalReset) "This cannot be undone in the app. All planning, history, Saved Meals and Saved Activities will be deleted. App Preferences return to System default / No default / 3. All four Reminder choices turn OFF. Exported backups will NOT be deleted."
                 else "This deletes all planning and adherence history, Saved Meals and Saved Activities, and resets App Preferences and Reminder choices. Your exported backup files will NOT be deleted. Android permissions and system settings will not change."
-            } else "This permanently deletes your fasting, meal, and activity plans and adherence history from this device. Saved Meals, Saved Activities, preferences, and exported backups will remain.") },
+            } else "This permanently deletes your fasting, meal, and activity plans and adherence history from this device. Saved Meals, Saved Activities, preferences, and exported backups will remain.") } } },
             confirmButton = { TextButton(onClick = model::confirm, modifier = Modifier.testTag("confirmDataAction")) {
                 Text(if (reset) { if (state.finalReset) "Reset App Data" else "Continue" } else "Clear", color = MaterialTheme.colorScheme.error)
             } }, dismissButton = { TextButton(onClick = model::cancel) { Text("Cancel") } })

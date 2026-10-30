@@ -113,11 +113,13 @@ fun ProgressScreen(state: ProgressState, previous: () -> Unit, next: () -> Unit,
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable private fun Summary(label: String, summary: AdherenceSummary?, modifier: Modifier) {
     Surface(modifier.testTag("summaryCard-$label"), shape = RoundedCornerShape(10.dp), color = ReviewCardColor, border = BorderStroke(.5.dp, ReviewOutline)) {
         Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(label, style = MaterialTheme.typography.labelMedium)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FlowRow(itemVerticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 CircularProgressIndicator(progress = { if (summary == null || summary.resolved == 0) 0f else summary.done.toFloat() / summary.resolved },
                     modifier = Modifier.size(32.dp).testTag("ring-$label").semantics { contentDescription = "$label ${summary?.percent?.let { "$it percent" } ?: "no resolved records"}" },
                     color = ReviewGreen, trackColor = ReviewOutline, strokeWidth = 5.dp, gapSize = 0.dp)
